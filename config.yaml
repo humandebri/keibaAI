@@ -1,0 +1,119 @@
+# 競馬予測システム設定ファイル
+
+# データスクレイピング設定
+scraping:
+  # 取得年範囲
+  year_start: 2022
+  year_end: 2023
+  
+  # 並行処理設定
+  max_workers: 3
+  timeout: 10
+  max_retries: 3
+  
+  # 競馬場コード
+  place_codes:
+    "01": "札幌"
+    "02": "函館"
+    "03": "福島"
+    "04": "新潟"
+    "05": "東京"
+    "06": "中山"
+    "07": "中京"
+    "08": "京都"
+    "09": "阪神"
+    "10": "小倉"
+  
+  # ユーザーエージェント
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/91.0.4472.124"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Edge/91.0.864.67"
+
+# データ処理設定
+data_processing:
+  # エンコーディング
+  file_encoding: "shift-jis"
+  
+  # 必須カラム
+  required_columns:
+    - "race_id"
+    - "馬"
+    - "騎手"
+    - "馬番"
+    - "着順"
+    - "オッズ"
+    - "人気"
+  
+  # カテゴリカル変数
+  categorical_columns:
+    - "馬"
+    - "騎手"
+    - "調教師"
+    - "性"
+    - "芝・ダート"
+    - "馬場"
+    - "天気"
+    - "場名"
+  
+  # 数値変数
+  numeric_columns:
+    - "着順"
+    - "馬番"
+    - "人気"
+    - "体重"
+    - "体重変化"
+    - "斤量"
+    - "オッズ"
+    - "距離"
+
+# モデル設定
+model:
+  # LightGBMパラメータ
+  lgb_params:
+    objective: "binary"
+    metric: "binary_logloss"
+    boosting_type: "gbdt"
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.9
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    verbose: 0
+    seed: 42
+  
+  # 学習設定
+  training:
+    test_size: 0.2
+    n_splits: 5  # クロスバリデーション分割数
+    early_stopping_rounds: 50
+    num_boost_round: 1000
+  
+  # 評価設定
+  evaluation:
+    metrics:
+      - "auc"
+      - "accuracy"
+      - "precision"
+      - "recall"
+    threshold_search_range: [0.3, 0.7]
+    threshold_search_step: 0.01
+
+# パス設定
+paths:
+  data_dir: "data"
+  model_dir: "models"
+  output_dir: "output"
+  log_dir: "logs"
+  
+# ロギング設定
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/keiba_ai.log"
+  
+# バージョン管理
+versioning:
+  model_prefix: "keiba_model"
+  data_version_file: "data_version.json"
+  keep_n_models: 5  # 保持するモデル数
