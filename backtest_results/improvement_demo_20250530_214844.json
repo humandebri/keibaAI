@@ -1,0 +1,10 @@
+{
+  "strategy": "複勝ベッティング + 期待値フィルタ",
+  "initial_capital": 1000000,
+  "final_capital": 1264170.93,
+  "total_return": 0.2641709299999999,
+  "annualized_return": 0.08127277072341177,
+  "win_rate": 0.3548597521200261,
+  "total_bets": 1533,
+  "improvement": "単勝-100%から複勝+25%へ改善"
+}

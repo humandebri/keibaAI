@@ -1,0 +1,98 @@
+{
+  "parameters": {
+    "betting_fraction": 0.005,
+    "ev_threshold": 1.2,
+    "monthly_stop_loss": 0.1
+  },
+  "summary": {
+    "initial_capital": 1000000,
+    "final_capital": 7028385.239064681,
+    "total_return": 6.028385239064681,
+    "annualized_return": 0.21530575868461077,
+    "overall_win_rate": 0.05265694662007471,
+    "total_bets": 24897
+  },
+  "yearly_results": [
+    {
+      "year": 2015,
+      "start_capital": 1000000,
+      "end_capital": 125446.56332762759,
+      "return_rate": -0.8745534366723724,
+      "num_bets": 2765,
+      "num_wins": 133,
+      "win_rate": 0.04810126582278481
+    },
+    {
+      "year": 2016,
+      "start_capital": 125446.56332762759,
+      "end_capital": 208650.93318424298,
+      "return_rate": 0.6632654386817384,
+      "num_bets": 2773,
+      "num_wins": 155,
+      "win_rate": 0.05589614136314461
+    },
+    {
+      "year": 2017,
+      "start_capital": 208650.93318424298,
+      "end_capital": 193337.87510264327,
+      "return_rate": -0.07339079604344721,
+      "num_bets": 2756,
+      "num_wins": 150,
+      "win_rate": 0.054426705370101594
+    },
+    {
+      "year": 2018,
+      "start_capital": 193337.87510264327,
+      "end_capital": 873145.8002947841,
+      "return_rate": 3.5161652874856006,
+      "num_bets": 2767,
+      "num_wins": 154,
+      "win_rate": 0.05565594506685941
+    },
+    {
+      "year": 2019,
+      "start_capital": 873145.8002947841,
+      "end_capital": 92167.55434829684,
+      "return_rate": -0.8944419656863951,
+      "num_bets": 2746,
+      "num_wins": 123,
+      "win_rate": 0.04479242534595776
+    },
+    {
+      "year": 2020,
+      "start_capital": 92167.55434829684,
+      "end_capital": 46623.58096349099,
+      "return_rate": -0.49414323410055255,
+      "num_bets": 2772,
+      "num_wins": 141,
+      "win_rate": 0.050865800865800864
+    },
+    {
+      "year": 2021,
+      "start_capital": 46623.58096349099,
+      "end_capital": 166887.12734433688,
+      "return_rate": 2.579457516895138,
+      "num_bets": 2770,
+      "num_wins": 150,
+      "win_rate": 0.05415162454873646
+    },
+    {
+      "year": 2022,
+      "start_capital": 166887.12734433688,
+      "end_capital": 2124457.727758645,
+      "return_rate": 11.729907702079792,
+      "num_bets": 2769,
+      "num_wins": 157,
+      "win_rate": 0.05669916937522571
+    },
+    {
+      "year": 2023,
+      "start_capital": 2124457.727758645,
+      "end_capital": 7028385.239064681,
+      "return_rate": 2.3083196465762583,
+      "num_bets": 2779,
+      "num_wins": 148,
+      "win_rate": 0.053256567110471394
+    }
+  ]
+}
