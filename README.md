@@ -180,12 +180,50 @@ python quickstart.py --mode train
 
 #### 1. データスクレイピング（手動実行推奨）
 
+##### 通常のスクレイピング（基本版）
 ```bash
 # 2024年のデータを取得
 python src/data_processing/data_scraping.py --start 2024 --end 2024
 
 # 複数年のデータを取得
 python src/data_processing/data_scraping.py --start 2022 --end 2024 --workers 5
+```
+
+##### チェックポイント機能付きスクレイピング（推奨）
+```bash
+# 通常の実行（チェックポイントから自動再開）
+python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2024
+
+# 50レースごとに保存
+python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2024 --save-interval 50
+
+# 最初からやり直す
+python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2024 --no-resume
+
+# 複数年のスクレイピング
+python src/data_processing/data_scraping_with_checkpoint.py --start 2020 --end 2024
+```
+
+**ファイル構造:**
+```
+Keiba_AI/
+├── data_with_payout/
+│   ├── 2024_interim_20240531_141523.xlsx  # 中間保存
+│   ├── 2024_interim_20240531_142045.xlsx  # 中間保存
+│   └── 2024_with_payout.xlsx             # 最終データ
+└── checkpoints/
+    └── checkpoint_2024.pkl                # チェックポイント
+```
+
+**中断と再開の例:**
+```bash
+# 実行中にCtrl+Cで中断
+# → checkpoint_2024.pkl が保存される
+
+# 再度実行すると自動的に続きから
+python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2024
+# → "チェックポイント読み込み成功: 2024-05-31T14:15:23"
+# → "処理済み: 1500/10920 レース"
 ```
 
 #### 2. データエンコーディング
