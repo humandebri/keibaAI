@@ -1,5 +1,19 @@
 # Keiba AI - 競馬予測AIシステム
 
+## 📋 目次
+
+- [概要](#概要)
+- [主な特徴](#主な特徴)
+- [使用方法](#使用方法)
+  - [🎯 クイックスタート](#-クイックスタート今すぐ実行したい方へ)
+  - [📋 ステップバイステップガイド](#-ステップバイステップガイド初めての方向け)
+  - [📊 オプション](#-オプション)
+- [🆕 新機能と戦略](#-新機能と戦略)
+- [データ仕様](#データ仕様)
+- [パフォーマンス](#パフォーマンス)
+- [セットアップ](#セットアップ)
+- [トラブルシューティング](#トラブルシューティング)
+
 ## 概要
 
 Keiba AIは、機械学習を用いて競馬レースの結果を予測する高度なAIシステムです。netkeiba.comから過去のレースデータを自動収集し、競馬ドメイン知識に基づいた特徴量エンジニアリングとLightGBMモデルによる予測を行います。
@@ -163,22 +177,79 @@ model.fit(X, y)
 
 ## 使用方法
 
-### クイックスタート（推奨）
+### 🎯 クイックスタート（今すぐ実行したい方へ）
 
 ```bash
-# バックテストを実行（最も簡単）
-python quickstart.py
+# 1. 仮想環境を有効化
+source .venv/bin/activate  # Mac/Linux
+# または
+.venv\Scripts\activate     # Windows
 
-# データの前処理
-python quickstart.py --mode encode --year 2024
+# 2. メインコマンド実行（最も簡単）
+python main.py backtest
 
-# モデル訓練
-python quickstart.py --mode train
+# 3. データがない場合は先にデータ収集
+python main.py collect --start-year 2024 --end-year 2024
 ```
 
-### 詳細な使用方法
+### 📋 ステップバイステップガイド（初めての方向け）
 
-#### 1. データスクレイピング（手動実行推奨）
+#### ステップ1: データがあるか確認
+```bash
+ls data/
+# 2019.xlsx, 2020.xlsx などがあればOK
+```
+
+#### ステップ2: データがない場合は収集
+```bash
+# 2024年のデータを収集（払戻データ付き）
+python src/data_processing/enhanced_scraping.py --year 2024
+
+# または中断可能なバージョン（推奨）
+python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2024
+```
+
+#### ステップ3: データの前処理
+```bash
+# 統合CLIを使用（推奨）
+python main.py encode --start-year 2022 --end-year 2023
+
+# または直接実行
+python src/data_processing/data_encoding.py --start 2022 --end 2023
+```
+
+#### ステップ4: モデルの訓練
+```bash
+python main.py train
+```
+
+#### ステップ5: バックテスト実行
+```bash
+python main.py backtest
+```
+
+### 📊 オプション
+
+```bash
+# 期待儤1.2以上のみ
+python main.py backtest --min-ev 1.2
+
+# 三連単を除外（高速化）
+python main.py backtest --no-trifecta
+
+# 期間指定
+python main.py backtest --start-year 2021 --end-year 2023
+```
+
+### 📑 完全ガイド（データ収集から始める場合）
+
+#### 1. データスクレイピング
+
+##### 🆕 払戻データ付きスクレイピング（推奨）
+```bash
+# 払戻データを含む拡張版
+python src/data_processing/enhanced_scraping.py --year 2024
+```
 
 ##### 通常のスクレイピング（基本版）
 ```bash
@@ -207,12 +278,12 @@ python src/data_processing/data_scraping_with_checkpoint.py --start 2020 --end 2
 **ファイル構造:**
 ```
 Keiba_AI/
-├── data_with_payout/
-│   ├── 2024_interim_20240531_141523.xlsx  # 中間保存
-│   ├── 2024_interim_20240531_142045.xlsx  # 中間保存
-│   └── 2024_with_payout.xlsx             # 最終データ
-└── checkpoints/
-    └── checkpoint_2024.pkl                # チェックポイント
+└── data_with_payout/
+    ├── 2024_interim_20240531_141523.xlsx  # 中間保存
+    ├── 2024_interim_20240531_142045.xlsx  # 中間保存
+    ├── 2024_with_payout.xlsx             # 最終データ
+    └── checkpoints/
+        └── checkpoint_2024.pkl            # チェックポイント
 ```
 
 **中断と再開の例:**
@@ -229,44 +300,52 @@ python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2
 #### 2. データエンコーディング
 
 ```bash
-# データの前処理と特徴量エンジニアリング
+# 🆕 払戻データ対応版（推奨）
+python src/data_processing/data_encoding_v2.py --start 2022 --end 2023
+
+# 通常版
 python src/data_processing/data_encoding.py --start 2022 --end 2023
 ```
 
 #### 3. モデル学習と評価
 
 ```bash
-# モデルの学習（Optuna最適化含む）
-python src/modeling/model_training.py
+# 統合CLIを使用（推奨）
+python main.py train
 
-# カスタム設定での学習
-python src/modeling/model_training.py --n_trials 200 --test_size 0.3
+# または直接実行
+python src/modeling/model_training.py
 ```
 
 #### 4. バックテスト実行
 
 ```bash
-# 改善されたバックテストシステムの実行
-python src/backtesting/backtest.py
+# 🆕 最新の高度な戦略（推奨）
+python main.py backtest
 
-# パラメータ調整
-python src/backtesting/backtest.py --betting_fraction 0.01 --ev_threshold 1.5
+# オプション付き
+python main.py backtest --min-ev 1.2 --no-trifecta
 ```
 
-### プロジェクトでの実行順序
+### 🚀 完全な実行フロー
 
 ```bash
-# 1. データ収集（手動実行推奨）
-python src/data_processing/data_scraping.py --year 2024
+# 1. データ収集（払戻データ付き）
+python src/data_processing/enhanced_scraping.py --year 2024
+# または中断可能版
+python src/data_processing/data_scraping_with_checkpoint.py --start 2024 --end 2024
 
-# 2. データ前処理
-python quickstart.py --mode encode --year 2024
+# 2. データ前処理（払戻データ対応）
+python src/data_processing/data_encoding_v2.py --start 2022 --end 2023
 
 # 3. モデル訓練
-python quickstart.py --mode train
+python main.py train
 
-# 4. バックテスト（評価）
-python quickstart.py --mode backtest
+# 4. バックテスト（実際のオッズ使用）
+python main.py backtest
+
+# 5. 推定オッズのみでバックテスト（比較用）
+python main.py backtest --no-actual-odds
 ```
 
 ### 5. Pythonコードとしての使用例
@@ -295,6 +374,55 @@ from src.backtesting.backtest import ImprovedBacktest
 backtest = ImprovedBacktest(betting_fraction=0.005)
 results = backtest.run_backtest()
 ```
+
+## 🆕 新機能と戦略
+
+### 🎯 高度な期待値ベッティング戦略
+
+#### 期待値計算
+```python
+# 三連単の期待値計算例
+的中確率 = P(1着) × P(2着|1着除外) × P(3着|1,2着除外)
+推定オッズ = f(人気順位の合計)
+期待値 = 的中確率 × 推定オッズ × (1 - JRA控除率)
+```
+
+#### ベッティングルール
+1. **期待値フィルタ**: 1.1以上（設定可能）
+2. **Kelly基準**: 最適ベット比率を計算
+3. **リスク制限**: 最大5%/レース
+4. **馬券種別調整**: 三連単30%、馬連50%、ワイド70%
+
+### 実際のオッズデータ使用
+最新版では、スクレイピングで取得した実際の払戻データを使用して期待値を計算できます：
+
+- **三連単**: 実際の三連単オッズ
+- **馬連**: 実際の馬連オッズ  
+- **ワイド**: 実際のワイドオッズ
+- **単勝・複勝**: 単勝・複勝の実際の配当
+
+```bash
+# 実際のオッズを使用（デフォルト）
+python main.py backtest
+
+# 推定オッズのみ使用（比較用）
+python main.py backtest --no-actual-odds
+```
+
+### 高度な特徴量エンジニアリング
+
+#### 基本特徴量（138以上）
+- **枠番**: 馬番から自動計算
+- **騎手・調教師の成績**: 勝率・複勝率
+- **馬の過去成績**: 直近3,5走の平均着順
+- **休養日数**: 前走からの間隔
+- **距離適性**: 短距離・マイル・中距離・長距離フラグ
+- **季節特徴量**: 春・夏・秋・冬の季節情報
+
+#### 払戻データ関連特徴量
+- **各種払戻額**: 実際の払戻金額（全馬券種）
+- **高配当フラグ**: 異常値検出によるレース特性把握
+- **配当パターン**: 人気と配当の乖離度
 
 ## データ仕様
 

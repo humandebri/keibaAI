@@ -16,6 +16,7 @@ import os
 from .base import BaseStrategy
 from ..core.config import config
 from ..core.utils import setup_logger
+from ..features.efficient_features import EfficientFeatureEngineering
 
 
 class AdvancedBettingStrategy(BaseStrategy):
@@ -24,35 +25,46 @@ class AdvancedBettingStrategy(BaseStrategy):
     def __init__(self, min_expected_value: float = 1.1, 
                  enable_trifecta: bool = True,
                  enable_quinella: bool = True,
-                 enable_wide: bool = True):
+                 enable_wide: bool = True,
+                 use_actual_odds: bool = True):
         super().__init__(name="AdvancedBetting")
         self.min_expected_value = min_expected_value
         self.enable_trifecta = enable_trifecta
         self.enable_quinella = enable_quinella
         self.enable_wide = enable_wide
+        self.use_actual_odds = use_actual_odds
         self.betting_fraction = 0.01
         self.jra_take_rate = 0.2  # JRA控除率
         
     def create_additional_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """追加特徴量の作成"""
+        """追加特徴量の作成（高度な特徴量を含む）"""
         df = df.copy()
         
-        # 対数オッズ
+        # 基本的な特徴量
         df['log_odds'] = np.log1p(df['オッズ'])
-        
-        # レース内での相対的な強さ
         df['odds_rank'] = df.groupby('race_id')['オッズ'].rank()
         df['popularity_rank'] = df.groupby('race_id')['人気'].rank()
         df['relative_odds'] = df.groupby('race_id')['オッズ'].transform(
             lambda x: x / x.min()
         )
         
-        # 馬番の有利不利
-        df['is_inner'] = (df['馬番'] <= 4).astype(int)
-        df['is_outer'] = (df['馬番'] >= 13).astype(int)
-        
         # 体重変化率
         df['weight_change_rate'] = df['体重変化'] / df['体重']
+        
+        # 効率的な特徴量エンジニアリング
+        feature_eng = EfficientFeatureEngineering(self.logger)
+        
+        # 高度な特徴量を追加
+        try:
+            df = feature_eng.add_all_features_fast(df)
+            self.logger.info(f"Feature engineering completed. Total features: {len(df.columns)}")
+        except Exception as e:
+            self.logger.warning(f"Failed to add some features: {e}")
+            # 基本特徴量のみ追加
+            try:
+                df = feature_eng.add_basic_features(df)
+            except:
+                pass
         
         return df
     
@@ -158,76 +170,94 @@ class AdvancedBettingStrategy(BaseStrategy):
             return min(base_prob * 0.5, 0.1)
     
     def calculate_trifecta_ev(self, probs: Dict[int, Dict], 
-                             h1: int, h2: int, h3: int) -> Tuple[float, float, float]:
-        """三連単の期待値計算（現実的）"""
+                             h1: int, h2: int, h3: int,
+                             actual_odds: Optional[float] = None) -> Tuple[float, float, float]:
+        """三連単の期待値計算（実際のオッズ使用可能）"""
         # 的中確率
         p1 = probs[h1]['win_prob']
         p2 = probs[h2]['show_prob'] * (1 - p1)
         p3 = probs[h3]['place_prob'] * (1 - p1 - p2 * 0.5)
         win_prob = p1 * p2 * p3
         
-        # オッズ推定（人気順位から）
-        pop_sum = probs[h1]['popularity'] + probs[h2]['popularity'] + probs[h3]['popularity']
+        if self.use_actual_odds and actual_odds is not None and actual_odds > 0:
+            # 実際のオッズを使用（払戻額/100円）
+            estimated_odds = actual_odds / 100
+        else:
+            # オッズ推定（人気順位から）
+            pop_sum = probs[h1]['popularity'] + probs[h2]['popularity'] + probs[h3]['popularity']
+            
+            if pop_sum <= 10:  # 上位人気
+                base_odds = 50 + pop_sum * 10
+            elif pop_sum <= 20:  # 中位人気
+                base_odds = 150 + pop_sum * 20
+            elif pop_sum <= 30:  # 中穴
+                base_odds = 500 + pop_sum * 30
+            else:  # 大穴
+                base_odds = min(1000 + pop_sum * 50, 5000)
+            
+            # 控除率考慮
+            estimated_odds = base_odds * (1 - self.jra_take_rate)
         
-        if pop_sum <= 10:  # 上位人気
-            base_odds = 50 + pop_sum * 10
-        elif pop_sum <= 20:  # 中位人気
-            base_odds = 150 + pop_sum * 20
-        elif pop_sum <= 30:  # 中穴
-            base_odds = 500 + pop_sum * 30
-        else:  # 大穴
-            base_odds = min(1000 + pop_sum * 50, 5000)
-        
-        # 控除率考慮
-        estimated_odds = base_odds * (1 - self.jra_take_rate)
         expected_value = win_prob * estimated_odds
         
         return expected_value, win_prob, estimated_odds
     
     def calculate_quinella_ev(self, probs: Dict[int, Dict], 
-                             h1: int, h2: int) -> Tuple[float, float, float]:
-        """馬連の期待値計算"""
+                             h1: int, h2: int,
+                             actual_odds: Optional[float] = None) -> Tuple[float, float, float]:
+        """馬連の期待値計算（実際のオッズ使用可能）"""
         # どちらかが1着、もう一方が2着
         p12 = probs[h1]['win_prob'] * probs[h2]['show_prob']
         p21 = probs[h2]['win_prob'] * probs[h1]['show_prob']
         win_prob = p12 + p21
         
-        # オッズ推定
-        pop_avg = (probs[h1]['popularity'] + probs[h2]['popularity']) / 2
-        
-        if pop_avg <= 3:
-            base_odds = 5 + pop_avg * 3
-        elif pop_avg <= 6:
-            base_odds = 15 + pop_avg * 5
-        elif pop_avg <= 10:
-            base_odds = 40 + pop_avg * 8
+        if self.use_actual_odds and actual_odds is not None and actual_odds > 0:
+            # 実際のオッズを使用（払戻額/100円）
+            estimated_odds = actual_odds / 100
         else:
-            base_odds = min(100 + pop_avg * 15, 500)
+            # オッズ推定
+            pop_avg = (probs[h1]['popularity'] + probs[h2]['popularity']) / 2
+            
+            if pop_avg <= 3:
+                base_odds = 5 + pop_avg * 3
+            elif pop_avg <= 6:
+                base_odds = 15 + pop_avg * 5
+            elif pop_avg <= 10:
+                base_odds = 40 + pop_avg * 8
+            else:
+                base_odds = min(100 + pop_avg * 15, 500)
+            
+            estimated_odds = base_odds * (1 - self.jra_take_rate)
         
-        estimated_odds = base_odds * (1 - self.jra_take_rate)
         expected_value = win_prob * estimated_odds
         
         return expected_value, win_prob, estimated_odds
     
     def calculate_wide_ev(self, probs: Dict[int, Dict], 
-                         h1: int, h2: int) -> Tuple[float, float, float]:
-        """ワイドの期待値計算"""
+                         h1: int, h2: int,
+                         actual_odds: Optional[float] = None) -> Tuple[float, float, float]:
+        """ワイドの期待値計算（実際のオッズ使用可能）"""
         # 両方が3着以内
         win_prob = probs[h1]['place_prob'] * probs[h2]['place_prob'] * 0.6
         
-        # オッズ推定（馬連の約40%）
-        pop_avg = (probs[h1]['popularity'] + probs[h2]['popularity']) / 2
-        
-        if pop_avg <= 3:
-            base_odds = 2 + pop_avg * 1
-        elif pop_avg <= 6:
-            base_odds = 5 + pop_avg * 2
-        elif pop_avg <= 10:
-            base_odds = 15 + pop_avg * 3
+        if self.use_actual_odds and actual_odds is not None and actual_odds > 0:
+            # 実際のオッズを使用（払戻額/100円）
+            estimated_odds = actual_odds / 100
         else:
-            base_odds = min(40 + pop_avg * 5, 200)
+            # オッズ推定（馬連の約40%）
+            pop_avg = (probs[h1]['popularity'] + probs[h2]['popularity']) / 2
+            
+            if pop_avg <= 3:
+                base_odds = 2 + pop_avg * 1
+            elif pop_avg <= 6:
+                base_odds = 5 + pop_avg * 2
+            elif pop_avg <= 10:
+                base_odds = 15 + pop_avg * 3
+            else:
+                base_odds = min(40 + pop_avg * 5, 200)
+            
+            estimated_odds = base_odds * (1 - self.jra_take_rate)
         
-        estimated_odds = base_odds * (1 - self.jra_take_rate)
         expected_value = win_prob * estimated_odds
         
         return expected_value, win_prob, estimated_odds
@@ -265,7 +295,7 @@ class AdvancedBettingStrategy(BaseStrategy):
     
     def run_backtest(self, initial_capital: float = 1_000_000) -> Dict:
         """高度なバックテストの実行"""
-        self.logger.info("Running advanced betting backtest")
+        self.logger.info("Running advanced betting backtest with actual odds")
         
         # モデル訓練
         model = self.train_model()
@@ -288,6 +318,9 @@ class AdvancedBettingStrategy(BaseStrategy):
             race_data = self.test_data[self.test_data['race_id'] == race_id]
             if len(race_data) < 8:  # 出走頭数が少ないレースはスキップ
                 continue
+            
+            # 払戻データを取得
+            payout_data = self._get_payout_data(race_data)
             
             # 確率予測
             probs = self.predict_probabilities(model, race_data)
@@ -312,8 +345,13 @@ class AdvancedBettingStrategy(BaseStrategy):
                     for p2 in partners[:4]:
                         for p3 in partners:
                             if p3 != p2:
+                                # 実際のオッズを取得
+                                actual_odds = self._get_actual_odds(
+                                    payout_data, 'trifecta', (axis, p2, p3)
+                                )
+                                
                                 ev, wp, odds = self.calculate_trifecta_ev(
-                                    probs, axis, p2, p3
+                                    probs, axis, p2, p3, actual_odds
                                 )
                                 
                                 if ev >= self.min_expected_value:
@@ -330,7 +368,12 @@ class AdvancedBettingStrategy(BaseStrategy):
                 axis = sorted_horses[0][0]
                 for i in range(1, min(6, len(sorted_horses))):
                     partner = sorted_horses[i][0]
-                    ev, wp, odds = self.calculate_quinella_ev(probs, axis, partner)
+                    # 実際のオッズを取得
+                    actual_odds = self._get_actual_odds(
+                        payout_data, 'quinella', tuple(sorted([axis, partner]))
+                    )
+                    
+                    ev, wp, odds = self.calculate_quinella_ev(probs, axis, partner, actual_odds)
                     
                     if ev >= self.min_expected_value:
                         race_bets.append({
@@ -345,7 +388,12 @@ class AdvancedBettingStrategy(BaseStrategy):
             if self.enable_wide and len(sorted_horses) >= 5:
                 top5 = [h[0] for h in sorted_horses[:5]]
                 for h1, h2 in combinations(top5, 2):
-                    ev, wp, odds = self.calculate_wide_ev(probs, h1, h2)
+                    # 実際のオッズを取得
+                    actual_odds = self._get_actual_odds(
+                        payout_data, 'wide', tuple(sorted([h1, h2]))
+                    )
+                    
+                    ev, wp, odds = self.calculate_wide_ev(probs, h1, h2, actual_odds)
                     
                     if ev >= self.min_expected_value * 0.9:  # ワイドは少し緩く
                         race_bets.append({
@@ -433,6 +481,53 @@ class AdvancedBettingStrategy(BaseStrategy):
                 return True, bet['estimated_odds']
         
         return False, 0
+    
+    def _get_payout_data(self, race_data: pd.DataFrame) -> Dict:
+        """レースの払戻データを取得"""
+        # 払戻データがJSON形式で保存されている場合
+        if '払戻データ' in race_data.columns:
+            try:
+                # 最初の行から払戻データを取得（全行同じデータ）
+                payout_json = race_data.iloc[0]['払戻データ']
+                if pd.notna(payout_json) and payout_json:
+                    return json.loads(payout_json)
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                self.logger.debug(f"Failed to parse payout data: {e}")
+        
+        return {}
+    
+    def _get_actual_odds(self, payout_data: Dict, bet_type: str, 
+                        selection: Tuple) -> Optional[float]:
+        """実際のオッズを取得"""
+        if not payout_data or bet_type not in payout_data:
+            return None
+        
+        bet_data = payout_data[bet_type]
+        
+        # 三連単の場合
+        if bet_type == 'trifecta':
+            key = f"{selection[0]}-{selection[1]}-{selection[2]}"
+            return bet_data.get(key)
+        
+        # 馬連・ワイドの場合
+        elif bet_type in ['quinella', 'wide']:
+            # 両方の順序を試す
+            key1 = f"{selection[0]}-{selection[1]}"
+            key2 = f"{selection[1]}-{selection[0]}"
+            
+            odds = bet_data.get(key1) or bet_data.get(key2)
+            
+            # ワイドは複数の配当がある場合がある
+            if bet_type == 'wide' and isinstance(bet_data, dict):
+                # 該当する組み合わせを探す
+                for k, v in bet_data.items():
+                    horses = set(k.split('-'))
+                    if horses == set(str(h) for h in selection):
+                        return v
+            
+            return odds
+        
+        return None
     
     def _calculate_metrics(self, initial_capital: float, final_capital: float,
                           all_bets: List[Dict], stats: Dict) -> Dict:

@@ -118,6 +118,10 @@ logs/
 temp/
 tmp/
 
+# Scraped data with payout
+data_with_payout/
+checkpoints/
+
 # Data files - Large files that should not be tracked
 data/*.xlsx
 data/*.csv

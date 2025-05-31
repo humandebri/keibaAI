@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-競馬データエンコーディングモジュール
+競馬データエンコーディングモジュール（払戻データ対応版）
 スクレイピングしたデータを機械学習用に前処理
 """
 
@@ -12,12 +12,13 @@ import warnings
 from typing import List, Tuple, Dict, Any
 import argparse
 from datetime import datetime
+import json
 
 warnings.filterwarnings('ignore')
 
 
-class RaceDataEncoder:
-    """競馬データのエンコーディングクラス"""
+class RaceDataEncoderV2:
+    """競馬データのエンコーディングクラス（払戻データ対応版）"""
     
     def __init__(self, config_dir: str = "config", encoded_dir: str = "encoded"):
         """
@@ -46,35 +47,51 @@ class RaceDataEncoder:
             '天気': {'晴': 0, '曇': 1, '小': 2, '雨': 3, '雪': 4}
         }
     
-    def load_data(self, year_start: int, year_end: int, data_dir: str = "data") -> pd.DataFrame:
-        """指定年のデータを読み込み"""
+    def load_data(self, year_start: int, year_end: int, data_dir: str = "data_with_payout") -> pd.DataFrame:
+        """指定年のデータを読み込み（払戻データ対応）"""
         dfs = []
         
         print("ファイル取得：開始")
         for year in range(year_start, year_end + 1):
-            file_path = os.path.join(data_dir, f"{year}.xlsx")
-            if os.path.exists(file_path):
-                print(f"読み込み中: {file_path}")
-                df = pd.read_excel(file_path, header=0)
-                
-                # 日付処理
-                if '日付' in df.columns:
-                    df['日付'] = self._parse_date(df['日付'])
-                
-                # 着順処理
-                df['着順'] = pd.to_numeric(df['着順'], errors='coerce')
-                df = df.dropna(subset=['着順'])
-                df['着順'] = df['着順'].astype(int)
-                
-                # 賞金処理
-                if '賞金' in df.columns:
-                    df['賞金'] = df['賞金'].astype(str).str.replace(',', '')
-                    df['賞金'] = pd.to_numeric(df['賞金'], errors='coerce').fillna(0)
-                
-                dfs.append(df)
-                print(f"  → {len(df)}行のデータを読み込みました")
-            else:
-                print(f"警告: {file_path} が見つかりません")
+            # 複数のファイル名パターンを試す
+            file_patterns = [
+                f"{year}_with_payout.xlsx",
+                f"{year}.xlsx",
+                f"{year}_enhanced.xlsx"
+            ]
+            
+            file_loaded = False
+            for file_name in file_patterns:
+                file_path = os.path.join(data_dir, file_name)
+                if os.path.exists(file_path):
+                    print(f"読み込み中: {file_path}")
+                    df = pd.read_excel(file_path, header=0)
+                    
+                    # 日付処理
+                    if '日付' in df.columns:
+                        df['日付'] = self._parse_date(df['日付'])
+                    
+                    # 着順処理
+                    df['着順'] = pd.to_numeric(df['着順'], errors='coerce')
+                    df = df.dropna(subset=['着順'])
+                    df['着順'] = df['着順'].astype(int)
+                    
+                    # 賞金処理
+                    if '賞金' in df.columns:
+                        df['賞金'] = df['賞金'].astype(str).str.replace(',', '')
+                        df['賞金'] = pd.to_numeric(df['賞金'], errors='coerce').fillna(0)
+                    
+                    # 枠番が文字列の場合は数値に変換
+                    if '枠番' in df.columns:
+                        df['枠番'] = pd.to_numeric(df['枠番'], errors='coerce').fillna(0).astype(int)
+                    
+                    dfs.append(df)
+                    print(f"  → {len(df)}行のデータを読み込みました")
+                    file_loaded = True
+                    break
+            
+            if not file_loaded:
+                print(f"警告: {year}年のデータファイルが見つかりません")
         
         if not dfs:
             raise ValueError("データファイルが見つかりません")
@@ -84,6 +101,55 @@ class RaceDataEncoder:
         print("ファイル取得：完了")
         
         return df_combined
+    
+    def process_payout_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """払戻データを処理して特徴量を作成"""
+        print("払戻データ処理：開始")
+        
+        # 払戻データがJSON形式で保存されている場合
+        if '払戻データ' in df.columns:
+            # 各レースの払戻情報から統計を作成
+            df['単勝最高配当'] = 0.0
+            df['複勝最低配当'] = 0.0
+            df['複勝最高配当'] = 0.0
+            df['三連単配当'] = 0.0
+            
+            for idx, row in df.iterrows():
+                try:
+                    payout_data = json.loads(row['払戻データ'])
+                    
+                    # 単勝の最高配当
+                    if payout_data.get('win'):
+                        df.at[idx, '単勝最高配当'] = max(payout_data['win'].values())
+                    
+                    # 複勝の最低・最高配当
+                    if payout_data.get('place'):
+                        place_values = list(payout_data['place'].values())
+                        if place_values:
+                            df.at[idx, '複勝最低配当'] = min(place_values)
+                            df.at[idx, '複勝最高配当'] = max(place_values)
+                    
+                    # 三連単の配当
+                    if payout_data.get('trifecta'):
+                        trifecta_values = list(payout_data['trifecta'].values())
+                        if trifecta_values:
+                            df.at[idx, '三連単配当'] = max(trifecta_values)
+                            
+                except (json.JSONDecodeError, KeyError, ValueError):
+                    # エラーの場合はデフォルト値のまま
+                    pass
+            
+            # 元の払戻データ列は削除（JSON文字列は機械学習に使えないため）
+            df = df.drop(columns=['払戻データ'])
+        
+        # 払戻関連の個別カラムがある場合の処理
+        payout_columns = [col for col in df.columns if '払戻_' in col]
+        if payout_columns:
+            print(f"  払戻カラム削除: {payout_columns}")
+            df = df.drop(columns=payout_columns)
+        
+        print("払戻データ処理：完了")
+        return df
     
     def _parse_date(self, date_series: pd.Series) -> pd.Series:
         """日付のパース"""
@@ -171,13 +237,14 @@ class RaceDataEncoder:
         return df
     
     def add_historical_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """過去走データの特徴量を追加"""
+        """過去走データの特徴量を追加（枠番も含む）"""
         print("近5走取得：開始")
         
         # データをソート
         df.sort_values(by=['馬', '日付'], ascending=[True, False], inplace=True)
         
-        features = ['馬番', '騎手', '斤量', 'オッズ', '体重', '体重変化', 
+        # 枠番を特徴量に追加
+        features = ['馬番', '枠番', '騎手', '斤量', 'オッズ', '体重', '体重変化', 
                    '上がり', '通過順', '着順', '距離', 'クラス', '走破時間', 
                    '芝・ダート', '天気', '馬場']
         
@@ -200,7 +267,7 @@ class RaceDataEncoder:
         return df
     
     def engineer_features(self, df: pd.DataFrame, year_start: int) -> pd.DataFrame:
-        """特徴量エンジニアリング"""
+        """特徴量エンジニアリング（払戻データから派生特徴量も作成）"""
         print("日付変換と特徴量エンジニアリング：開始")
         
         df.replace('---', np.nan, inplace=True)
@@ -217,6 +284,12 @@ class RaceDataEncoder:
                 df[f'距離差{i}'] = df[f'距離{i}'] - df[f'距離{i+1}']
             if f'日付{i}' in df.columns and f'日付{i+1}' in df.columns:
                 df[f'日付差{i}'] = (df[f'日付{i}'] - df[f'日付{i+1}']).dt.days
+        
+        # 枠番の統計（過去5走の枠番平均）
+        waku_columns = ['枠番', '枠番1', '枠番2', '枠番3', '枠番4', '枠番5']
+        existing_waku_cols = [col for col in waku_columns if col in df.columns]
+        if existing_waku_cols:
+            df['平均枠番'] = df[existing_waku_cols].mean(axis=1)
         
         # 斤量関連
         kinryo_columns = ['斤量', '斤量1', '斤量2', '斤量3', '斤量4', '斤量5']
@@ -238,8 +311,8 @@ class RaceDataEncoder:
             )
             df = pd.merge(df, jockey_win_rate, on='騎手', how='left')
         
-        # 出走頭数
-        if 'race_id' in df.columns:
+        # 出走頭数（既に含まれている場合はスキップ）
+        if 'race_id' in df.columns and '出走頭数' not in df.columns:
             df['出走頭数'] = df.groupby('race_id')['race_id'].transform('count')
         
         for i in range(1, 6):
@@ -262,6 +335,12 @@ class RaceDataEncoder:
                 df[f'賞金{i}'] = df.groupby('馬')['賞金'].shift(i)
             df['過去5走の合計賞金'] = df[[f'賞金{i}' for i in range(1, 6)]].sum(axis=1)
             df.drop(columns=[f'賞金{i}' for i in range(1, 6)] + ['賞金'], inplace=True)
+        
+        # 払戻データから作成した特徴量の処理
+        if '単勝最高配当' in df.columns:
+            # レースの配当レベル（高配当レースかどうか）
+            df['高配当レース'] = (df['単勝最高配当'] > 1000).astype(int)
+            df['三連単高配当'] = (df['三連単配当'] > 10000).astype(int)
         
         print("日付変換と特徴量エンジニアリング：完了")
         return df
@@ -314,10 +393,13 @@ class RaceDataEncoder:
             df[f'{date_col}_sin'] = np.sin((df[date_col].dt.month - 1) * (2 * np.pi / 12))
             df[f'{date_col}_cos'] = np.cos((df[date_col].dt.month - 1) * (2 * np.pi / 12))
     
-    def encode_data(self, year_start: int, year_end: int, data_dir: str = "data") -> str:
-        """データのエンコーディングを実行"""
+    def encode_data(self, year_start: int, year_end: int, data_dir: str = "data_with_payout") -> str:
+        """データのエンコーディングを実行（払戻データ対応版）"""
         # データ読み込み
         df = self.load_data(year_start, year_end, data_dir)
+        
+        # 払戻データの処理
+        df = self.process_payout_data(df)
         
         # 各種変換処理
         df = self.transform_data(df)
@@ -326,7 +408,7 @@ class RaceDataEncoder:
         df = self.finalize_encoding(df, year_start)
         
         # 保存
-        output_path = os.path.join(self.encoded_dir, f'{year_start}_{year_end}encoded_data.csv')
+        output_path = os.path.join(self.encoded_dir, f'{year_start}_{year_end}encoded_data_v2.csv')
         df.to_csv(output_path, index=False)
         
         print(f"ファイル出力：完了")
@@ -334,21 +416,28 @@ class RaceDataEncoder:
         print(f"データ件数: {len(df)}行")
         print(f"カラム数: {len(df.columns)}列")
         
+        # 新しい特徴量の確認
+        new_features = ['枠番', '平均枠番', '単勝最高配当', '複勝最低配当', 
+                       '複勝最高配当', '三連単配当', '高配当レース', '三連単高配当']
+        existing_new_features = [f for f in new_features if f in df.columns]
+        if existing_new_features:
+            print(f"\n新しい特徴量: {existing_new_features}")
+        
         return output_path
 
 
 def main():
     """メイン関数"""
-    parser = argparse.ArgumentParser(description='競馬データエンコーディング')
+    parser = argparse.ArgumentParser(description='競馬データエンコーディング（払戻データ対応版）')
     parser.add_argument('--start', type=int, default=2014, help='開始年')
     parser.add_argument('--end', type=int, default=2025, help='終了年')
-    parser.add_argument('--data_dir', type=str, default='data', help='データディレクトリ')
+    parser.add_argument('--data_dir', type=str, default='data_with_payout', help='データディレクトリ')
     parser.add_argument('--encoded_dir', type=str, default='encoded', help='エンコード済みデータ出力ディレクトリ')
     parser.add_argument('--config_dir', type=str, default='config', help='設定ファイル出力ディレクトリ')
     
     args = parser.parse_args()
     
-    encoder = RaceDataEncoder(config_dir=args.config_dir, encoded_dir=args.encoded_dir)
+    encoder = RaceDataEncoderV2(config_dir=args.config_dir, encoded_dir=args.encoded_dir)
     encoder.encode_data(args.start, args.end, args.data_dir)
 
 

@@ -45,13 +45,13 @@ class BaseStrategy(ABC):
             'metrics': {}
         }
     
-    def load_data(self, start_year: int = 2014, end_year: int = 2024):
+    def load_data(self, start_year: int = 2014, end_year: int = 2024, use_payout_data: bool = False):
         """データの読み込みと準備"""
         self.logger.info(f"Loading data from {start_year} to {end_year}")
         
         # データ読み込み
         years = list(range(start_year, end_year + 1))
-        self.data = self.data_loader.load_race_data(years)
+        self.data = self.data_loader.load_race_data(years, use_payout_data=use_payout_data)
         
         # 基本的な特徴量準備
         self.data = self.feature_processor.prepare_basic_features(self.data)

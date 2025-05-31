@@ -26,7 +26,8 @@ def run_backtest(strategy_name: str = 'advanced', **kwargs):
             min_expected_value=kwargs.get('min_ev', 1.1),
             enable_trifecta=kwargs.get('trifecta', True),
             enable_quinella=kwargs.get('quinella', True),
-            enable_wide=kwargs.get('wide', True)
+            enable_wide=kwargs.get('wide', True),
+            use_actual_odds=kwargs.get('use_actual_odds', True)
         )
     else:
         raise ValueError(f"Unknown strategy: {strategy_name}")
@@ -34,12 +35,19 @@ def run_backtest(strategy_name: str = 'advanced', **kwargs):
     logger.info(f"Running {strategy_name} strategy")
     
     # データ読み込み
-    strategy.load_data(start_year=2019, end_year=2023)
+    start_year = kwargs.get('start_year', 2019)
+    end_year = kwargs.get('end_year', 2023)
+    use_payout_data = kwargs.get('use_payout_data', False)
+    
+    strategy.load_data(start_year=start_year, end_year=end_year, use_payout_data=use_payout_data)
     
     # データ分割
+    train_years = kwargs.get('train_years', [2019, 2020])
+    test_years = kwargs.get('test_years', [2021, 2022, 2023])
+    
     strategy.split_data(
-        train_years=[2019, 2020],
-        test_years=[2021, 2022, 2023]
+        train_years=train_years,
+        test_years=test_years
     )
     
     # バックテスト実行
@@ -130,6 +138,12 @@ def main():
     )
     
     parser.add_argument(
+        '--no-actual-odds',
+        action='store_true',
+        help='実際のオッズを使用しない（推定オッズのみ）'
+    )
+    
+    parser.add_argument(
         '--start-year',
         type=int,
         default=2019,
@@ -143,16 +157,46 @@ def main():
         help='終了年'
     )
     
+    parser.add_argument(
+        '--train-years',
+        type=int,
+        nargs='+',
+        help='訓練データの年（スペース区切りで複数指定可）'
+    )
+    
+    parser.add_argument(
+        '--test-years',
+        type=int,
+        nargs='+',
+        help='テストデータの年（スペース区切りで複数指定可）'
+    )
+    
+    parser.add_argument(
+        '--use-payout-data',
+        action='store_true',
+        help='data_with_payoutディレクトリのデータを使用'
+    )
+    
     args = parser.parse_args()
     
     # コマンド実行
     if args.command == 'backtest':
+        # デフォルトの訓練・テスト年を設定
+        train_years = args.train_years if args.train_years else [args.start_year, args.start_year + 1]
+        test_years = args.test_years if args.test_years else list(range(args.start_year + 2, args.end_year + 1))
+        
         run_backtest(
             args.strategy,
             min_ev=args.min_ev,
             trifecta=not args.no_trifecta,
             quinella=not args.no_quinella,
-            wide=not args.no_wide
+            wide=not args.no_wide,
+            use_actual_odds=not args.no_actual_odds,
+            start_year=args.start_year,
+            end_year=args.end_year,
+            train_years=train_years,
+            test_years=test_years,
+            use_payout_data=args.use_payout_data
         )
     elif args.command == 'collect':
         run_data_collection(args.start_year, args.end_year)

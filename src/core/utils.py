@@ -47,29 +47,61 @@ class DataLoader:
         self.logger = logger or setup_logger(__name__)
     
     def load_race_data(self, years: Union[int, List[int]], 
-                      data_dir: Optional[Path] = None) -> pd.DataFrame:
+                      data_dir: Optional[Path] = None,
+                      use_payout_data: bool = False) -> pd.DataFrame:
         """レースデータの読み込み"""
         if isinstance(years, int):
             years = [years]
+        
+        # Check for data_with_payout directory first if requested
+        if use_payout_data:
+            payout_dir = Path("data_with_payout")
+            if payout_dir.exists():
+                data_dir = payout_dir
+                self.logger.info("Using data_with_payout directory")
         
         data_dir = data_dir or DATA_DIR
         dfs = []
         
         for year in years:
-            file_path = data_dir / f"{year}.xlsx"
-            if file_path.exists():
-                try:
-                    df = pd.read_excel(file_path)
-                    # 着順を数値に変換し、無効な値を除去
-                    df['着順'] = pd.to_numeric(df['着順'], errors='coerce')
-                    df = df.dropna(subset=['着順'])
-                    df['year'] = year
-                    self.logger.info(f"Loaded {file_path.name}: {len(df)} rows")
-                    dfs.append(df)
-                except Exception as e:
-                    self.logger.error(f"Error loading {file_path}: {e}")
-            else:
-                self.logger.warning(f"File not found: {file_path}")
+            # Try multiple file patterns for payout data
+            file_patterns = [
+                f"{year}_with_payout.xlsx",
+                f"{year}.xlsx"
+            ] if use_payout_data else [f"{year}.xlsx"]
+            
+            file_loaded = False
+            for pattern in file_patterns:
+                file_path = data_dir / pattern
+                if file_path.exists():
+                    try:
+                        df = pd.read_excel(file_path)
+                        # 着順を数値に変換し、無効な値を除去
+                        df['着順'] = pd.to_numeric(df['着順'], errors='coerce')
+                        df = df.dropna(subset=['着順'])
+                        df['year'] = year
+                        self.logger.info(f"Loaded {file_path.name}: {len(df)} rows")
+                        dfs.append(df)
+                        file_loaded = True
+                        break
+                    except Exception as e:
+                        self.logger.error(f"Error loading {file_path}: {e}")
+            
+            if not file_loaded:
+                # Fallback to regular data directory
+                fallback_path = DATA_DIR / f"{year}.xlsx"
+                if fallback_path.exists() and data_dir != DATA_DIR:
+                    try:
+                        df = pd.read_excel(fallback_path)
+                        df['着順'] = pd.to_numeric(df['着順'], errors='coerce')
+                        df = df.dropna(subset=['着順'])
+                        df['year'] = year
+                        self.logger.info(f"Loaded {fallback_path.name} (fallback): {len(df)} rows")
+                        dfs.append(df)
+                    except Exception as e:
+                        self.logger.error(f"Error loading {fallback_path}: {e}")
+                else:
+                    self.logger.warning(f"No data file found for year {year}")
         
         if not dfs:
             raise ValueError("No data files were loaded")
