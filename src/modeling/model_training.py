@@ -34,6 +34,7 @@ def load_race_data():
     """エンコード済みデータを読み込む"""
     possible_paths = [
         'encoded/encoded_data.csv',
+        'encoded/2014_2025encoded_data.csv',
         'encoded/2022_2023encoded_data.csv',
         'encoded/2022encoded_data.csv',
         'encoded/2023encoded_data.csv'
