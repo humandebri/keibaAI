@@ -407,6 +407,28 @@ python main.py backtest
 
 # 推定オッズのみ使用（比較用）
 python main.py backtest --no-actual-odds
+
+# 期間指定でバックテスト
+python main.py backtest --train-years 2022 --test-years 2024 2025
+```
+
+### 📊 グラフ出力付きバックテスト
+視覚的なバックテスト結果を生成：
+
+```bash
+# デフォルト設定で実行
+python enhanced_visual_backtest.py
+
+# カスタム設定
+python enhanced_visual_backtest.py --train-years 2022 --test-years 2024 2025 --min-ev 1.2
+```
+
+出力されるファイル：
+- `backtest_comprehensive_analysis.png`: 総合分析（9つのグラフ）
+- `backtest_detailed_analysis.png`: 詳細分析
+- `backtest_trades.csv`: 取引履歴
+- `backtest_results.json`: 結果の詳細
+
 ```
 
 ### 高度な特徴量エンジニアリング

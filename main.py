@@ -35,15 +35,15 @@ def run_backtest(strategy_name: str = 'advanced', **kwargs):
     logger.info(f"Running {strategy_name} strategy")
     
     # データ読み込み
-    start_year = kwargs.get('start_year', 2019)
-    end_year = kwargs.get('end_year', 2023)
-    use_payout_data = kwargs.get('use_payout_data', False)
+    start_year = kwargs.get('start_year', 2022)
+    end_year = kwargs.get('end_year', 2025)
+    use_payout_data = kwargs.get('use_payout_data', True)
     
     strategy.load_data(start_year=start_year, end_year=end_year, use_payout_data=use_payout_data)
     
     # データ分割
-    train_years = kwargs.get('train_years', [2019, 2020])
-    test_years = kwargs.get('test_years', [2021, 2022, 2023])
+    train_years = kwargs.get('train_years', [2022])
+    test_years = kwargs.get('test_years', [2024, 2025])
     
     strategy.split_data(
         train_years=train_years,
@@ -146,14 +146,14 @@ def main():
     parser.add_argument(
         '--start-year',
         type=int,
-        default=2019,
+        default=2022,
         help='開始年'
     )
     
     parser.add_argument(
         '--end-year',
         type=int,
-        default=2023,
+        default=2025,
         help='終了年'
     )
     
@@ -174,7 +174,8 @@ def main():
     parser.add_argument(
         '--use-payout-data',
         action='store_true',
-        help='data_with_payoutディレクトリのデータを使用'
+        default=True,
+        help='払戻データ付きファイルを使用（デフォルト）'
     )
     
     args = parser.parse_args()
