@@ -1,0 +1,43 @@
+{
+  "parameters": {
+    "start_year": 2020,
+    "end_year": 2025,
+    "train_years": [
+      2020
+    ],
+    "test_years": [
+      2025
+    ],
+    "min_ev": 1.1,
+    "initial_capital": 1000000,
+    "bet_fraction": 0.01
+  },
+  "metrics": {
+    "initial_capital": 1000000,
+    "final_capital": 3131600.0,
+    "total_return": 2.1316,
+    "annual_return": 2.1316,
+    "total_bets": 265,
+    "total_wins": 12,
+    "win_rate": 0.045283018867924525,
+    "avg_expected_value": 1.4524101632900006,
+    "avg_bet": 40518.49056603773,
+    "by_type": {
+      "trifecta": {
+        "count": 246,
+        "wins": 5,
+        "win_rate": 0.02032520325203252,
+        "profit": -4293000.0,
+        "roi": -1.7451219512195122
+      },
+      "quinella": {
+        "count": 19,
+        "wins": 7,
+        "win_rate": 0.3684210526315789,
+        "profit": 6424600.0,
+        "roi": 33.81368421052632
+      }
+    }
+  },
+  "timestamp": "2025-06-01T18:41:20.252699"
+}

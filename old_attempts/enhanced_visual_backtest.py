@@ -49,9 +49,9 @@ class VisualBacktest:
         
         # デフォルトの訓練・テスト年設定
         if train_years is None:
-            train_years = [2022]
+            train_years = [2022,2023,2024]
         if test_years is None:
-            test_years = [2024, 2025]
+            test_years = [2025]
             
         self.logger.info(f"バックテスト期間: {start_year}-{end_year}")
         self.logger.info(f"訓練年: {train_years}")
@@ -63,7 +63,8 @@ class VisualBacktest:
             enable_trifecta=True,
             enable_quinella=True,
             enable_wide=True,
-            use_actual_odds=True
+            use_actual_odds=True,
+            kelly_fraction=0.25  # ケリー基準25%
         )
         
         # データ読み込み（data_with_payoutディレクトリから）
@@ -167,24 +168,43 @@ class VisualBacktest:
         self._create_detailed_analysis(df, results)
         
     def _plot_capital_evolution(self, ax, df, initial_capital):
-        """資金推移のプロット"""
-        ax.plot(df['date'], df['capital'], linewidth=2, color='darkblue', label='資金残高')
+        """資金推移のプロット（レースごと）"""
+        # 日付順に並び替え
+        df_sorted = df.sort_values('date').reset_index(drop=True)
+        
+        # レースごとの資金推移をプロット
+        ax.plot(df_sorted.index, df_sorted['capital'], linewidth=1.5, color='darkblue', 
+                label='資金残高', marker='o', markersize=2, alpha=0.8)
         ax.axhline(y=initial_capital, color='gray', linestyle='--', alpha=0.5, label='初期資金')
         
-        # 移動平均線
-        if len(df) > 20:
-            ma20 = df['capital'].rolling(20).mean()
-            ax.plot(df['date'], ma20, color='orange', alpha=0.7, label='20取引移動平均')
+        # 勝ち負けで色分け
+        win_indices = df_sorted[df_sorted['is_win'] == True].index
+        lose_indices = df_sorted[df_sorted['is_win'] == False].index
         
-        ax.set_title('資金推移', fontsize=14, fontweight='bold')
-        ax.set_xlabel('日付')
+        if len(win_indices) > 0:
+            ax.scatter(win_indices, df_sorted.loc[win_indices, 'capital'], 
+                      color='green', s=50, alpha=0.8, zorder=5, label='勝利')
+        if len(lose_indices) > 0:
+            ax.scatter(lose_indices, df_sorted.loc[lose_indices, 'capital'], 
+                      color='red', s=20, alpha=0.5, zorder=4)
+        
+        # 移動平均線
+        if len(df_sorted) > 20:
+            ma20 = df_sorted['capital'].rolling(20).mean()
+            ax.plot(df_sorted.index, ma20, color='orange', alpha=0.7, 
+                   label='20レース移動平均', linewidth=2)
+        
+        ax.set_title('資金推移（レースごと）', fontsize=14, fontweight='bold')
+        ax.set_xlabel('レース番号（日付順）')
         ax.set_ylabel('資金 (円)')
         ax.legend()
         ax.grid(True, alpha=0.3)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
         
         # Y軸のフォーマット
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:,.0f}'))
+        
+        # X軸の範囲設定
+        ax.set_xlim(-5, len(df_sorted) + 5)
         
     def _plot_monthly_performance(self, ax, df):
         """月別パフォーマンス"""
@@ -405,30 +425,40 @@ class VisualBacktest:
         
     def _plot_performance_by_time(self, ax, df):
         """時間帯別パフォーマンス"""
-        df['hour'] = pd.to_datetime(df['race_id'].astype(str).str[8:12], 
-                                   format='%H%M', errors='coerce').dt.hour
+        try:
+            df['hour'] = pd.to_datetime(df['race_id'].astype(str).str[8:12], 
+                                       format='%H%M', errors='coerce').dt.hour
+            
+            hourly = df.groupby('hour').agg({
+                'profit': 'sum',
+                'is_win': ['mean', 'count']
+            })
+            
+            if len(hourly) == 0:
+                ax.text(0.5, 0.5, 'データ不足', 
+                       transform=ax.transAxes, ha='center', va='center')
+                return
+            
+            ax2 = ax.twinx()
+            
+            # 利益棒グラフ
+            bars = ax.bar(hourly.index, hourly[('profit', 'sum')], alpha=0.7, label='利益')
         
-        hourly = df.groupby('hour').agg({
-            'profit': 'sum',
-            'is_win': ['mean', 'count']
-        })
+            # 勝率線グラフ
+            ax2.plot(hourly.index, hourly[('is_win', 'mean')] * 100, 
+                    'r-o', linewidth=2, label='勝率')
         
-        ax2 = ax.twinx()
-        
-        # 利益棒グラフ
-        bars = ax.bar(hourly.index, hourly['profit'], alpha=0.7, label='利益')
-        
-        # 勝率線グラフ
-        ax2.plot(hourly.index, hourly[('is_win', 'mean')] * 100, 
-                'r-o', linewidth=2, label='勝率')
-        
-        ax.set_title('時間帯別パフォーマンス', fontsize=12, fontweight='bold')
-        ax.set_xlabel('時間')
-        ax.set_ylabel('利益 (円)')
-        ax2.set_ylabel('勝率 (%)')
-        
-        ax.legend(loc='upper left')
-        ax2.legend(loc='upper right')
+            ax.set_title('時間帯別パフォーマンス', fontsize=12, fontweight='bold')
+            ax.set_xlabel('時間')
+            ax.set_ylabel('利益 (円)')
+            ax2.set_ylabel('勝率 (%)')
+            
+            ax.legend(loc='upper left')
+            ax2.legend(loc='upper right')
+            
+        except Exception as e:
+            ax.text(0.5, 0.5, f'エラー: {str(e)[:50]}', 
+                   transform=ax.transAxes, ha='center', va='center')
         
     def _plot_win_rate_by_odds_range(self, ax, df):
         """オッズ帯別勝率"""
