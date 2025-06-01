@@ -1,0 +1,78 @@
+[
+  {
+    "strategy_id": "A",
+    "strategy_name": "堅実上位型",
+    "initial_capital": 1000000,
+    "final_capital": 99100.1669284938,
+    "total_return": -0.9008998330715062,
+    "win_rate": 0.035794183445190156,
+    "total_races": 149,
+    "total_bets": 447,
+    "total_wins": 16,
+    "yearly_stats": {
+      "2020": {
+        "races": 149,
+        "bets": 447,
+        "wins": 16,
+        "profit": -900899.8330715061
+      }
+    }
+  },
+  {
+    "strategy_id": "B",
+    "strategy_name": "1番人気軸中穴流し",
+    "initial_capital": 1000000,
+    "final_capital": 98812.70095438394,
+    "total_return": -0.901187299045616,
+    "win_rate": 0.020080321285140562,
+    "total_races": 249,
+    "total_bets": 996,
+    "total_wins": 20,
+    "yearly_stats": {
+      "2020": {
+        "races": 249,
+        "bets": 996,
+        "wins": 20,
+        "profit": -901187.2990456161
+      }
+    }
+  },
+  {
+    "strategy_id": "C",
+    "strategy_name": "中穴BOX",
+    "initial_capital": 1000000,
+    "final_capital": 99798.00213986826,
+    "total_return": -0.9002019978601318,
+    "win_rate": 0.009433962264150943,
+    "total_races": 424,
+    "total_bets": 2544,
+    "total_wins": 24,
+    "yearly_stats": {
+      "2020": {
+        "races": 424,
+        "bets": 2544,
+        "wins": 24,
+        "profit": -900201.9978601316
+      }
+    }
+  },
+  {
+    "strategy_id": "D",
+    "strategy_name": "バランス型",
+    "initial_capital": 1000000,
+    "final_capital": 98244.45697324275,
+    "total_return": -0.9017555430267572,
+    "win_rate": 0.03125,
+    "total_races": 184,
+    "total_bets": 736,
+    "total_wins": 23,
+    "yearly_stats": {
+      "2020": {
+        "races": 184,
+        "bets": 736,
+        "wins": 23,
+        "profit": -901755.5430267574
+      }
+    }
+  }
+]

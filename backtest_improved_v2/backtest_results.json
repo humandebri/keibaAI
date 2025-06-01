@@ -1,0 +1,34 @@
+{
+  "parameters": {
+    "min_expected_value": 1.3,
+    "enable_trifecta": false,
+    "enable_quinella": true,
+    "enable_wide": true,
+    "kelly_fraction": 0.5,
+    "max_dd_ratio": 0.15,
+    "top_races_percentile": 0.95
+  },
+  "metrics": {
+    "initial_capital": 1000000,
+    "final_capital": 912100,
+    "total_return": -0.0879,
+    "annual_return": -0.08789999999999998,
+    "total_bets": 2,
+    "total_wins": 0,
+    "win_rate": 0.0,
+    "avg_expected_value": 2.074903753912075,
+    "avg_bet": 43950.0,
+    "by_type": {
+      "quinella": {
+        "count": 2,
+        "wins": 0,
+        "win_rate": 0.0,
+        "profit": -87900,
+        "roi": -4.395
+      }
+    }
+  },
+  "monthly_bets": {
+    "202508": 2
+  }
+}

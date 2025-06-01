@@ -1,0 +1,42 @@
+[
+  {
+    "strategy": "1-2番人気",
+    "final_capital": 0.0,
+    "total_return": -1.0,
+    "win_rate": 0.029649595687331536,
+    "total_bets": 371,
+    "wins": 11
+  },
+  {
+    "strategy": "1-3番人気BOX",
+    "final_capital": 0.0,
+    "total_return": -1.0,
+    "win_rate": 0.028451882845188285,
+    "total_bets": 1195,
+    "wins": 34
+  },
+  {
+    "strategy": "2-3番人気",
+    "final_capital": 0.0,
+    "total_return": -1.0,
+    "win_rate": 0.027093596059113302,
+    "total_bets": 406,
+    "wins": 11
+  },
+  {
+    "strategy": "1-4番人気BOX",
+    "final_capital": 0.0,
+    "total_return": -1.0,
+    "win_rate": 0.02252252252252252,
+    "total_bets": 2442,
+    "wins": 55
+  },
+  {
+    "strategy": "1番人気軸",
+    "final_capital": 0.0,
+    "total_return": -1.0,
+    "win_rate": 0.025394045534150613,
+    "total_bets": 1142,
+    "wins": 29
+  }
+]

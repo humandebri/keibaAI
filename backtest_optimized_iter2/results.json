@@ -1,0 +1,52 @@
+{
+  "iteration": 2,
+  "parameters": {
+    "min_expected_value": 1.07,
+    "enable_wide": true,
+    "optimized_params": {
+      "boosting_type": "gbdt",
+      "num_leaves": 44,
+      "learning_rate": 0.0645017885644165,
+      "feature_fraction": 0.8706893932714403,
+      "bagging_fraction": 0.762731259136093,
+      "bagging_freq": 4,
+      "lambda_l1": 0.8422180225700928,
+      "lambda_l2": 0.023054894368082612,
+      "min_child_samples": 22
+    }
+  },
+  "metrics": {
+    "initial_capital": 1000000,
+    "final_capital": 79.91999999990367,
+    "total_return": -0.9999200800000001,
+    "annual_return": -0.9999200800000001,
+    "total_bets": 261,
+    "total_wins": 70,
+    "win_rate": 0.2681992337164751,
+    "avg_expected_value": 1.3756681901696726,
+    "avg_bet": 6631.0344827586205,
+    "by_type": {
+      "win": {
+        "count": 237,
+        "wins": 64,
+        "win_rate": 0.270042194092827,
+        "profit": -1463436.8,
+        "roi": -0.6174838818565401
+      },
+      "place": {
+        "count": 3,
+        "wins": 3,
+        "win_rate": 1.0,
+        "profit": -36103.28,
+        "roi": -1.2034426666666667
+      },
+      "quinella": {
+        "count": 21,
+        "wins": 3,
+        "win_rate": 0.14285714285714285,
+        "profit": 499620.0,
+        "roi": 2.379142857142857
+      }
+    }
+  }
+}
