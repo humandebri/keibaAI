@@ -1,72 +1,72 @@
 {
   "initial_capital": 1000000,
-  "final_capital": 28084540.0,
-  "total_return": 27.08454,
-  "total_trades": 2330,
-  "winning_trades": 301,
-  "win_rate": 0.12918454935622317,
-  "avg_expected_value": 3.5270918454935622,
+  "final_capital": 27753330.0,
+  "total_return": 26.75333,
+  "total_trades": 2321,
+  "winning_trades": 297,
+  "win_rate": 0.12796208530805686,
+  "avg_expected_value": 3.5276139595002154,
   "monthly_results": {
     "2024-07": {
-      "bets": 147,
+      "bets": 150,
       "wins": 20,
-      "profit": 2028370.0
+      "profit": 2033000.0
     },
     "2024-08": {
       "bets": 261,
-      "wins": 38,
-      "profit": 1633020.0
+      "wins": 39,
+      "profit": 1646250.0
     },
     "2024-09": {
-      "bets": 179,
+      "bets": 177,
       "wins": 27,
-      "profit": 3717760.0
+      "profit": 3729890.0
     },
     "2024-06": {
-      "bets": 187,
-      "wins": 22,
-      "profit": 1601030.0
+      "bets": 182,
+      "wins": 19,
+      "profit": 1514510.0
     },
     "2024-04": {
-      "bets": 253,
-      "wins": 28,
-      "profit": 2474120.0
+      "bets": 248,
+      "wins": 25,
+      "profit": 1852100.0
     },
     "2024-11": {
-      "bets": 202,
+      "bets": 201,
       "wins": 25,
-      "profit": 1890610.0
+      "profit": 1951670.0
     },
     "2024-05": {
       "bets": 215,
-      "wins": 26,
-      "profit": 2572410.0
+      "wins": 28,
+      "profit": 2760950.0
     },
     "2024-10": {
-      "bets": 145,
-      "wins": 24,
-      "profit": 2362020.0
+      "bets": 149,
+      "wins": 22,
+      "profit": 2141720.0
     },
     "2024-01": {
-      "bets": 220,
-      "wins": 22,
-      "profit": 1294400.0
+      "bets": 212,
+      "wins": 23,
+      "profit": 1596100.0
     },
     "2024-02": {
-      "bets": 160,
+      "bets": 162,
       "wins": 25,
-      "profit": 3644500.0
+      "profit": 3625800.0
     },
     "2024-03": {
-      "bets": 197,
+      "bets": 199,
       "wins": 20,
-      "profit": 1475500.0
+      "profit": 1450940.0
     },
     "2024-12": {
-      "bets": 164,
+      "bets": 165,
       "wins": 24,
-      "profit": 2390800.0
+      "profit": 2450400.0
     }
   },
-  "roi": 28.08454
+  "roi": 27.75333
 }

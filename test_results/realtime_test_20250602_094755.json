@@ -1,0 +1,22 @@
+{
+  "test_time": "2025-06-02T09:47:40.113472",
+  "tests": {
+    "jra": {
+      "status": "no_data",
+      "race_count": 0
+    },
+    "netkeiba": {
+      "status": "no_data",
+      "race_count": 0
+    },
+    "integration": {
+      "status": "success"
+    },
+    "rate_limiting": {
+      "status": "success"
+    },
+    "integrated_system": {
+      "status": "success"
+    }
+  }
+}

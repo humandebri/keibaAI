@@ -1,0 +1,6 @@
+{
+  "training_period": "2020-2025",
+  "training_date": "2025-06-02 10:30:41",
+  "n_features": 134,
+  "model_type": "LightGBM"
+}
