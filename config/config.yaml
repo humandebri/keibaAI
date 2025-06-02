@@ -1,58 +1,84 @@
-# Keiba AI Configuration File
+# 競馬AI統一システム設定ファイル
 
-# Data Scraping Settings
+# スクレイピング設定
 scraping:
-  start_year: 2024
-  end_year: 2024
+  start_year: 2020
+  end_year: 2025
   max_workers: 3
   timeout: 120
   retry_count: 3
-  output_format: xlsx  # xlsx or csv
+  min_delay: 1.0
+  max_delay: 3.0
 
-# Data Encoding Settings
-encoding:
-  input_dir: data
-  output_dir: encoded
-  config_dir: config
-
-# Model Training Settings
+# モデル設定
 model:
   test_size: 0.2
   random_state: 42
-  n_trials: 100  # Number of Optuna optimization trials
-  cv_folds: 5    # Number of cross-validation folds
+  n_trials: 100
+  cv_folds: 5
   
-  # LightGBM Default Parameters
+  # アンサンブル重み
+  ensemble_weights:
+    lightgbm: 0.4
+    xgboost: 0.3
+    random_forest: 0.15
+    gradient_boosting: 0.15
+  
+  # LightGBMパラメータ
   lgb_params:
-    objective: binary
-    metric: auc
+    objective: regression
+    metric: rmse
     boosting_type: gbdt
     num_leaves: 31
     learning_rate: 0.05
-    feature_fraction: 0.9
+    feature_fraction: 0.8
     bagging_fraction: 0.8
     bagging_freq: 5
+    min_child_samples: 20
+    lambda_l1: 0.1
+    lambda_l2: 0.1
     verbose: -1
-    random_state: 42
+    seed: 42
 
-# Backtesting Settings
+# バックテスト設定
 backtest:
-  initial_capital: 1000000
-  betting_fraction: 0.005  # Kelly criterion base (0.5%)
-  monthly_stop_loss: 0.1   # 10% monthly stop loss
-  ev_threshold: 1.2        # Expected value threshold
-  confidence_threshold: 0.7 # Minimum confidence for betting
+  initial_capital: 1000000.0
+  betting_fraction: 0.005
+  ev_threshold: 1.1
+  monthly_stop_loss: 0.15
+  max_bet_per_race: 10000.0
+  max_daily_loss: 50000.0
+  kelly_fraction: 0.025
+  
+  # 券種別ベット割合
+  bet_type_fractions:
+    trifecta: 0.7
+    quinella: 0.9
+    wide: 1.0
+    win: 1.0
+    place: 1.0
 
-# Output Settings
-output:
-  model_dir: models
-  results_dir: results
-  log_level: INFO
-
-# Feature Engineering Settings
-features:
-  use_past_races: 5  # Number of past races to consider
-  use_seasonal: true
-  use_jockey_stats: true
-  use_trainer_stats: true
-  use_horse_stats: true
+# データ処理設定
+data:
+  categorical_columns:
+    - 性
+    - 馬場
+    - 天気
+    - 芝・ダート
+    - 場名
+  
+  numeric_columns:
+    - 馬番
+    - 斤量
+    - オッズ
+    - 人気
+    - 体重
+    - 体重変化
+  
+  # 特徴量エンジニアリング設定
+  feature_engineering:
+    basic_features: true
+    track_features: true
+    historical_features: true
+    payout_features: true
+    interaction_features: true

@@ -7,11 +7,14 @@ import pandas as pd
 import numpy as np
 import logging
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 import os
 import lightgbm as lgb
+import pickle
+import json
 
 from .config import config, DATA_DIR, ENCODED_DIR, MODELS_DIR
+from ..features.unified_features import UnifiedFeatureEngine
 
 # LightGBMのエラー対策
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -139,11 +142,12 @@ class DataLoader:
 
 
 class FeatureProcessor:
-    """特徴量処理の共通クラス"""
+    """特徴量処理の共通クラス（統一特徴量エンジンを使用）"""
     
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.logger = logger or setup_logger(__name__)
         self.config = config.data
+        self.feature_engine = UnifiedFeatureEngine()
     
     def prepare_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """基本的な特徴量の準備"""
@@ -152,49 +156,32 @@ class FeatureProcessor:
         # 着順を数値に変換
         df['着順'] = pd.to_numeric(df['着順'], errors='coerce')
         
-        # カテゴリカル変数のエンコーディング
-        for col in self.config.categorical_columns:
-            if col in df.columns:
-                df[col] = pd.Categorical(df[col]).codes
+        # race_idが存在しない場合は作成
+        if 'race_id' not in df.columns:
+            if all(col in df.columns for col in ['year', '開催', '回', '日', 'レース']):
+                df['race_id'] = (df['year'].astype(str) + 
+                               df['開催'].astype(str).str.zfill(2) + 
+                               df['回'].astype(str).str.zfill(2) + 
+                               df['日'].astype(str).str.zfill(2) + 
+                               df['レース'].astype(str).str.zfill(2))
         
-        # 数値変数の処理
-        for col in self.config.numeric_columns:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-                # 欠損値を中央値で埋める
-                if df[col].isna().any():
-                    median_val = df[col].median()
-                    df[col] = df[col].fillna(median_val)
-                    self.logger.debug(f"Filled {col} NaN values with median: {median_val}")
+        # 統一特徴量エンジンで特徴量を構築
+        self.logger.info("Building features using unified feature engine...")
+        df = self.feature_engine.build_all_features(df)
         
         return df
     
     def create_target_variables(self, df: pd.DataFrame) -> pd.DataFrame:
         """ターゲット変数の作成"""
-        df = df.copy()
-        
-        # 勝利フラグ
-        df['is_win'] = (df['着順'] == 1).astype(int)
-        
-        # 複勝フラグ（3着以内）
-        df['is_place'] = (df['着順'] <= 3).astype(int)
-        
-        # 連対フラグ（2着以内）
-        df['is_exacta'] = (df['着順'] <= 2).astype(int)
-        
-        return df
+        return self.feature_engine.create_target_variables(df)
     
     def get_feature_columns(self, df: pd.DataFrame, 
                            exclude_cols: Optional[List[str]] = None) -> List[str]:
         """特徴量カラムのリストを取得"""
-        if exclude_cols is None:
-            exclude_cols = ['着順', 'is_win', 'is_place', 'is_exacta', 
-                           'race_id', 'horse_id', 'year', 'date']
+        feature_cols = self.feature_engine.get_feature_columns(df)
         
-        feature_cols = []
-        for col in df.columns:
-            if col not in exclude_cols and df[col].dtype in ['int64', 'float64', 'int32', 'float32']:
-                feature_cols.append(col)
+        if exclude_cols:
+            feature_cols = [col for col in feature_cols if col not in exclude_cols]
         
         return feature_cols
 
@@ -204,34 +191,52 @@ class ModelManager:
     
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.logger = logger or setup_logger(__name__)
-        self.models_dir = MODELS_DIR
     
-    def save_model(self, model, model_name: str, model_type: str = 'lightgbm'):
+    def save_models(self, models: Dict[str, Any], file_path: Union[str, Path]) -> None:
         """モデルの保存"""
-        file_path = self.models_dir / f"{model_name}.txt"
+        file_path = Path(file_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         
-        if model_type == 'lightgbm':
-            model.save_model(str(file_path))
-        else:
-            import joblib
-            file_path = self.models_dir / f"{model_name}.pkl"
-            joblib.dump(model, file_path)
+        with open(file_path, 'wb') as f:
+            pickle.dump(models, f)
         
-        self.logger.info(f"Model saved to {file_path}")
+        self.logger.info(f"Models saved to {file_path}")
     
-    def load_model(self, model_name: str, model_type: str = 'lightgbm'):
+    def load_models(self, file_path: Union[str, Path]) -> Dict[str, Any]:
         """モデルの読み込み"""
-        if model_type == 'lightgbm':
-            file_path = self.models_dir / f"{model_name}.txt"
-            if not file_path.exists():
-                raise FileNotFoundError(f"Model not found: {file_path}")
-            return lgb.Booster(model_file=str(file_path))
-        else:
-            import joblib
-            file_path = self.models_dir / f"{model_name}.pkl"
-            if not file_path.exists():
-                raise FileNotFoundError(f"Model not found: {file_path}")
-            return joblib.load(file_path)
+        file_path = Path(file_path)
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"Model file not found: {file_path}")
+        
+        with open(file_path, 'rb') as f:
+            models = pickle.load(f)
+        
+        self.logger.info(f"Models loaded from {file_path}")
+        return models
+    
+    def save_model_info(self, info: Dict[str, Any], file_path: Union[str, Path]) -> None:
+        """モデル情報の保存"""
+        file_path = Path(file_path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(info, f, ensure_ascii=False, indent=2, default=str)
+        
+        self.logger.info(f"Model info saved to {file_path}")
+    
+    def load_model_info(self, file_path: Union[str, Path]) -> Dict[str, Any]:
+        """モデル情報の読み込み"""
+        file_path = Path(file_path)
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"Model info file not found: {file_path}")
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            info = json.load(f)
+        
+        self.logger.info(f"Model info loaded from {file_path}")
+        return info
 
 
 def calculate_statistics(series: pd.Series) -> dict:
