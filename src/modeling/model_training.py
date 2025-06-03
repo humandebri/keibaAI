@@ -1,465 +1,368 @@
 #!/usr/bin/env python3
 """
-競馬予測モデルの包括的改善
-- 競馬ドメイン知識を活かした特徴量エンジニアリング
-- TimeSeriesSplitによる適切な交差検証
-- ベースラインモデルとの比較
-- Optunaによるハイパーパラメータ最適化
-- SHAP値によるモデル解釈性分析
+Clean ML Model Training
+オッズを使わない真の機械学習モデル訓練システム
 """
 
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import roc_auc_score, precision_recall_curve, f1_score
-import optuna
-import shap
-import matplotlib.pyplot as plt
-import seaborn as sns
+from sklearn.metrics import roc_auc_score, accuracy_score, classification_report
+import joblib
 import warnings
 import os
 from datetime import datetime
 
 warnings.filterwarnings('ignore')
 
-# 日本語フォント設定
-plt.rcParams['font.sans-serif'] = ['Hiragino Sans', 'Yu Gothic', 'Meirio', 'Takao', 'IPAexGothic', 'IPAPGothic', 'VL PGothic', 'Noto Sans CJK JP']
-plt.rcParams['axes.unicode_minus'] = False
 
-
-def load_race_data():
-    """エンコード済みデータを読み込む"""
-    possible_paths = [
-        'encoded/encoded_data.csv',
-        'encoded/2014_2025encoded_data.csv',
-        'encoded/2022_2023encoded_data.csv',
-        'encoded/2022encoded_data.csv',
-        'encoded/2023encoded_data.csv'
-    ]
+class CleanModelTrainer:
+    """クリーンな機械学習モデル訓練クラス"""
     
-    for path in possible_paths:
-        if os.path.exists(path):
-            df = pd.read_csv(path)
-            print(f"データを読み込みました: {path}")
-            print(f"データサイズ: {df.shape}")
-            
-            # race_idから実際の日付を抽出
-            if 'race_id' in df.columns:
-                # race_idを文字列に変換し、最初の8文字を抽出
-                df['race_id_str'] = df['race_id'].astype(str).str.replace('.0', '')
-                df['actual_date'] = pd.to_datetime(df['race_id_str'].str[:8], format='%Y%m%d', errors='coerce')
-                
-                # 日付が正しく変換されたか確認
-                valid_dates = df['actual_date'].notna()
-                print(f"\n日付変換成功率: {valid_dates.sum() / len(df) * 100:.1f}%")
-                
-                if valid_dates.sum() > 0:
-                    df = df[valid_dates].copy()
-                    print(f"有効なデータ数: {len(df)}")
+    def __init__(self):
+        self.model = None
+        self.scaler = StandardScaler()
+        self.feature_columns = None
+        self.feature_importance = None
+        self.model_metrics = {}
+        self.jockey_stats = {}
+        self.trainer_stats = {}
+        
+    def load_training_data(self, data_path="encoded/2020_2025encoded_data_v2.csv"):
+        """訓練データを読み込み"""
+        print("📊 訓練データ読み込み開始")
+        
+        try:
+            df = pd.read_csv(data_path)
+            print(f"   データ読み込み完了: {len(df):,}件")
+            print(f"   勝利ケース: {(df['着順'] == 1).sum():,}件 ({(df['着順'] == 1).mean():.3f})")
+            print(f"   特徴量数: {len(df.columns)}個")
             
             return df
+            
+        except Exception as e:
+            print(f"❌ データ読み込みエラー: {e}")
+            return None
     
-    raise FileNotFoundError("エンコード済みデータが見つかりません")
-
-
-def create_domain_features(df):
-    """競馬のドメイン知識を活かした特徴量を作成"""
-    df_features = df.copy()
-    
-    print("\n=== 特徴量エンジニアリング開始 ===")
-    
-    # 1. 馬の能力指標
-    if '前走からの間隔' in df_features.columns:
-        # 適度な休養（3-5週）フラグ
-        df_features['適度な休養'] = df_features['前走からの間隔'].apply(
-            lambda x: 1 if 21 <= x <= 35 else 0 if pd.notna(x) else 0
-        )
-        # 長期休養明け（12週以上）フラグ
-        df_features['長期休養明け'] = df_features['前走からの間隔'].apply(
-            lambda x: 1 if x >= 84 else 0 if pd.notna(x) else 0
-        )
-    
-    # 2. 過去成績の集約特徴量
-    if '前走着順' in df_features.columns:
-        df_features['前走勝利'] = (df_features['前走着順'] == 1).astype(int)
-        df_features['前走連対'] = (df_features['前走着順'] <= 2).astype(int)
-        df_features['前走着内'] = (df_features['前走着順'] <= 3).astype(int)
-    
-    # 3. 距離適性
-    if '距離' in df_features.columns:
-        df_features['短距離'] = (df_features['距離'] <= 1400).astype(int)
-        df_features['マイル'] = ((df_features['距離'] > 1400) & (df_features['距離'] <= 1800)).astype(int)
-        df_features['中距離'] = ((df_features['距離'] > 1800) & (df_features['距離'] <= 2400)).astype(int)
-        df_features['長距離'] = (df_features['距離'] > 2400).astype(int)
-    
-    # 4. 馬場状態の影響
-    if '馬場' in df_features.columns:
-        baba_map = {'良': 0, '稍重': 1, '重': 2, '不良': 3}
-        df_features['馬場状態数値'] = df_features['馬場'].map(baba_map).fillna(0)
-        df_features['重馬場'] = (df_features['馬場状態数値'] >= 2).astype(int)
-    
-    # 5. 斤量の影響
-    if '斤量' in df_features.columns and '性別' in df_features.columns:
-        df_features['牡馬'] = (df_features['性別'] == '牡').astype(int)
-        df_features['牝馬'] = (df_features['性別'] == '牝').astype(int)
-        # 斤量負担
-        df_features['斤量負担'] = df_features.apply(
-            lambda row: row['斤量'] - 57 if row['牡馬'] else row['斤量'] - 55,
-            axis=1
-        )
-    
-    # 6. 枠順の影響
-    if '枠番' in df_features.columns and '頭数' in df_features.columns:
-        df_features['内枠'] = (df_features['枠番'] <= 3).astype(int)
-        df_features['外枠'] = (df_features['枠番'] >= 7).astype(int)
-        df_features['相対枠位置'] = df_features['枠番'] / df_features['頭数']
-    
-    # 7. 季節・時期の影響
-    if 'actual_date' in df_features.columns:
-        df_features['月'] = df_features['actual_date'].dt.month
-        df_features['春'] = df_features['月'].apply(lambda x: 1 if 3 <= x <= 5 else 0)
-        df_features['夏'] = df_features['月'].apply(lambda x: 1 if 6 <= x <= 8 else 0)
-        df_features['秋'] = df_features['月'].apply(lambda x: 1 if 9 <= x <= 11 else 0)
-        df_features['冬'] = df_features['月'].apply(lambda x: 1 if x == 12 or x <= 2 else 0)
-    
-    # 8. 人気と実力の乖離
-    if '単勝' in df_features.columns and '人気' in df_features.columns:
-        df_features['人気オッズ乖離'] = df_features['人気'] / (np.log1p(df_features['単勝']) + 1)
-    
-    # 9. コース特性
-    if 'コース' in df_features.columns:
-        df_features['芝'] = df_features['コース'].str.contains('芝', na=False).astype(int)
-        df_features['ダート'] = df_features['コース'].str.contains('ダ', na=False).astype(int)
+    def create_clean_features(self, df: pd.DataFrame) -> tuple:
+        """オッズを使わないクリーンな特徴量エンジニアリング"""
+        print("🔧 クリーンな特徴量エンジニアリング開始")
         
-        if '競馬場' in df_features.columns:
-            left_courses = ['東京', '中京', '新潟']
-            df_features['左回り'] = df_features['競馬場'].apply(
-                lambda x: 1 if any(course in str(x) for course in left_courses) else 0
+        # ターゲット変数
+        y = (df['着順'] == 1).astype(int)
+        
+        # 基本特徴量（オッズ除外）
+        basic_features = [
+            '人気', '体重', '体重変化', '斤量', '上がり', 
+            '出走頭数', '距離', 'クラス', '騎手の勝率', '性', '齢'
+        ]
+        
+        # 過去成績（オッズ除外）
+        past_features = []
+        for i in range(1, 6):
+            past_features.extend([f'着順{i}', f'距離{i}', f'通過順{i}', f'走破時間{i}'])
+        
+        # 時系列・統計・レース条件
+        temporal_features = ['日付差1', '日付差2', '日付差3']
+        stat_features = ['平均スピード', '過去5走の合計賞金', '平均斤量']
+        race_features = ['芝・ダート', '回り', '馬場', '天気', '場id']
+        
+        # 使用可能特徴量
+        all_candidates = basic_features + past_features + temporal_features + stat_features + race_features
+        available_features = [col for col in all_candidates if col in df.columns]
+        
+        enhanced_df = df.copy()
+        selected_features = available_features.copy()
+        
+        # 馬の過去成績分析
+        if all(f'着順{i}' in df.columns for i in range(1, 6)):
+            past_positions = [df[f'着順{i}'].fillna(10) for i in range(1, 6)]
+            if past_positions:
+                past_pos_df = pd.concat(past_positions, axis=1)
+                enhanced_df['過去平均着順'] = past_pos_df.mean(axis=1)
+                enhanced_df['過去最高着順'] = past_pos_df.min(axis=1)
+                enhanced_df['勝利経験'] = (past_pos_df == 1).sum(axis=1)
+                enhanced_df['複勝経験'] = (past_pos_df <= 3).sum(axis=1)
+                enhanced_df['着順安定性'] = past_pos_df.std(axis=1).fillna(5)
+                selected_features.extend(['過去平均着順', '過去最高着順', '勝利経験', '複勝経験', '着順安定性'])
+        
+        # 休養期間分析
+        if '日付差1' in df.columns:
+            enhanced_df['休養期間'] = df['日付差1'].fillna(30)
+            enhanced_df['休養適正'] = np.where(
+                (enhanced_df['休養期間'] >= 14) & (enhanced_df['休養期間'] <= 60), 1.2,
+                np.where(enhanced_df['休養期間'] < 14, 0.9, 0.8)
             )
-    
-    # 10. 騎手の影響
-    if '騎手' in df_features.columns and '着順' in df_features.columns:
-        # 上位騎手フラグ
-        top_jockeys = df_features[df_features['着順'] == 1]['騎手'].value_counts().head(20).index
-        df_features['上位騎手'] = df_features['騎手'].isin(top_jockeys).astype(int)
-    
-    created_features = len(df_features.columns) - len(df.columns)
-    print(f"作成した特徴量数: {created_features}個")
-    
-    return df_features
-
-
-def run_cross_validation(X, y, df_features):
-    """時系列交差検証を実行"""
-    tscv = TimeSeriesSplit(n_splits=5)
-    
-    print("\n=== 時系列交差検証の分割 ===")
-    for i, (train_idx, valid_idx) in enumerate(tscv.split(X)):
-        train_dates = df_features.iloc[train_idx]['actual_date']
-        valid_dates = df_features.iloc[valid_idx]['actual_date']
-        print(f"\nFold {i+1}:")
-        print(f"  訓練: {train_dates.min().date()} ~ {train_dates.max().date()} ({len(train_idx):,}件)")
-        print(f"  検証: {valid_dates.min().date()} ~ {valid_dates.max().date()} ({len(valid_idx):,}件)")
-    
-    # ベースラインモデル（ロジスティック回帰）
-    print("\n=== ベースラインモデル（ロジスティック回帰）の評価 ===")
-    baseline_scores = []
-    scaler = StandardScaler()
-    
-    for fold, (train_idx, valid_idx) in enumerate(tscv.split(X)):
-        X_train, X_valid = X.iloc[train_idx], X.iloc[valid_idx]
-        y_train, y_valid = y.iloc[train_idx], y.iloc[valid_idx]
+            selected_features.extend(['休養期間', '休養適正'])
         
-        # 欠損値処理
-        X_train = X_train.fillna(X_train.mean())
-        X_valid = X_valid.fillna(X_train.mean())
+        # 距離適性分析
+        if '距離' in df.columns:
+            current_distance = df['距離'].fillna(1600)
+            enhanced_df['距離カテゴリ'] = pd.cut(current_distance, 
+                                        bins=[0, 1400, 1800, 2200, 3000], 
+                                        labels=[1, 2, 3, 4]).astype(float)
+            selected_features.append('距離カテゴリ')
         
-        # 標準化
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_valid_scaled = scaler.transform(X_valid)
+        # 騎手・調教師詳細成績
+        if '騎手' in df.columns:
+            print("   🏇 騎手実績計算中...")
+            jockey_stats = df.groupby('騎手').agg({
+                '着順': ['count', lambda x: (x == 1).sum(), lambda x: (x <= 3).sum()]
+            }).round(4)
+            jockey_stats.columns = ['騎乗数', '勝利数', '複勝数']
+            jockey_stats['実勝率'] = jockey_stats['勝利数'] / jockey_stats['騎乗数']
+            jockey_stats['実複勝率'] = jockey_stats['複勝数'] / jockey_stats['騎乗数']
+            
+            self.jockey_stats = {
+                '実勝率': dict(zip(jockey_stats.index, jockey_stats['実勝率'])),
+                '実複勝率': dict(zip(jockey_stats.index, jockey_stats['実複勝率'])),
+                '騎乗数': dict(zip(jockey_stats.index, jockey_stats['騎乗数']))
+            }
+            
+            enhanced_df['騎手実勝率'] = df['騎手'].map(jockey_stats['実勝率']).fillna(0.08)
+            enhanced_df['騎手実複勝率'] = df['騎手'].map(jockey_stats['実複勝率']).fillna(0.25)
+            selected_features.extend(['騎手実勝率', '騎手実複勝率'])
         
-        # クラス重み
-        class_weight = {0: 1, 1: (y_train == 0).sum() / (y_train == 1).sum()}
+        if '調教師' in df.columns:
+            print("   👔 調教師実績計算中...")
+            trainer_stats = df.groupby('調教師').agg({
+                '着順': ['count', lambda x: (x == 1).sum()]
+            }).round(4)
+            trainer_stats.columns = ['管理数', '勝利数']
+            trainer_stats['実勝率'] = trainer_stats['勝利数'] / trainer_stats['管理数']
+            
+            self.trainer_stats = {
+                '実勝率': dict(zip(trainer_stats.index, trainer_stats['実勝率'])),
+                '管理数': dict(zip(trainer_stats.index, trainer_stats['管理数']))
+            }
+            
+            enhanced_df['調教師実勝率'] = df['調教師'].map(trainer_stats['実勝率']).fillna(0.06)
+            selected_features.append('調教師実勝率')
         
-        # モデル学習
-        lr_model = LogisticRegression(class_weight=class_weight, max_iter=1000, random_state=42)
-        lr_model.fit(X_train_scaled, y_train)
+        # 枠番分析
+        if '枠' in df.columns:
+            enhanced_df['枠番'] = df['枠'].fillna(4)
+            enhanced_df['内枠'] = (enhanced_df['枠番'] <= 3).astype(int)
+            enhanced_df['外枠'] = (enhanced_df['枠番'] >= 7).astype(int)
+            selected_features.extend(['枠番', '内枠', '外枠'])
+        
+        # 人気のみの市場評価
+        if '人気' in df.columns:
+            enhanced_df['本命'] = (enhanced_df['人気'] <= 3).astype(int)
+            enhanced_df['大穴'] = (enhanced_df['人気'] >= 9).astype(int)
+            enhanced_df['人気逆数'] = 1.0 / enhanced_df['人気'].fillna(9)
+            selected_features.extend(['本命', '大穴', '人気逆数'])
+        
+        # 最終特徴量マトリックス
+        final_features = [col for col in selected_features if col in enhanced_df.columns]
+        X = enhanced_df[final_features].copy()
+        
+        # データクリーニング
+        X = X.replace([np.inf, -np.inf], 0)
+        X = X.fillna(0)
+        X = X.select_dtypes(include=[np.number])
+        
+        self.feature_columns = list(X.columns)
+        
+        print(f"✅ 特徴量エンジニアリング完了")
+        print(f"   最終特徴量数: {len(self.feature_columns)}個")
+        print(f"   オッズ関連特徴量: 除外済み")
+        
+        return X, y
+    
+    def train_model(self, X: pd.DataFrame, y: pd.Series, optimize=True):
+        """モデル訓練"""
+        print("🤖 クリーンモデル訓練開始")
+        
+        # 分割
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.15, random_state=42, stratify=y
+        )
+        
+        print(f"   訓練データ: {X_train.shape[0]:,}件")
+        print(f"   検証データ: {X_test.shape[0]:,}件")
+        print(f"   特徴量数: {X_train.shape[1]}個")
+        print(f"   正例の割合: {y_train.mean():.3f}")
+        
+        # スケーリング
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
+        
+        if optimize:
+            # ハイパーパラメータ最適化
+            print("   🔍 ハイパーパラメータ最適化中...")
+            param_grid = {
+                'n_estimators': [200, 300, 400],
+                'max_depth': [15, 20, 25],
+                'min_samples_split': [50, 80, 100],
+                'min_samples_leaf': [25, 40, 50],
+                'max_features': ['sqrt', 'log2']
+            }
+            
+            rf = RandomForestClassifier(
+                random_state=42,
+                class_weight='balanced',
+                n_jobs=-1,
+                oob_score=True
+            )
+            
+            grid_search = GridSearchCV(
+                rf, param_grid, cv=3, scoring='roc_auc', n_jobs=-1, verbose=0
+            )
+            grid_search.fit(X_train_scaled, y_train)
+            
+            self.model = grid_search.best_estimator_
+            print(f"   最適パラメータ: {grid_search.best_params_}")
+            print(f"   CV AUC: {grid_search.best_score_:.3f}")
+        else:
+            # デフォルトパラメータ
+            self.model = RandomForestClassifier(
+                n_estimators=300,
+                max_depth=20,
+                min_samples_split=80,
+                min_samples_leaf=40,
+                max_features='sqrt',
+                random_state=42,
+                class_weight='balanced',
+                n_jobs=-1,
+                oob_score=True
+            )
+            self.model.fit(X_train_scaled, y_train)
         
         # 評価
-        y_pred = lr_model.predict_proba(X_valid_scaled)[:, 1]
-        auc_score = roc_auc_score(y_valid, y_pred)
-        baseline_scores.append(auc_score)
+        test_pred = self.model.predict(X_test_scaled)
+        test_proba = self.model.predict_proba(X_test_scaled)[:, 1]
         
-        print(f"Fold {fold+1} AUC: {auc_score:.4f}")
-    
-    print(f"\nベースライン平均AUC: {np.mean(baseline_scores):.4f} ± {np.std(baseline_scores):.4f}")
-    
-    # LightGBMモデル
-    print("\n=== LightGBMモデルの評価 ===")
-    lgb_scores = []
-    lgb_models = []
-    
-    for fold, (train_idx, valid_idx) in enumerate(tscv.split(X)):
-        X_train, X_valid = X.iloc[train_idx], X.iloc[valid_idx]
-        y_train, y_valid = y.iloc[train_idx], y.iloc[valid_idx]
+        test_accuracy = accuracy_score(y_test, test_pred)
+        test_auc = roc_auc_score(y_test, test_proba)
+        oob_score = self.model.oob_score_
         
-        # 欠損値処理
-        X_train = X_train.fillna(X_train.mean())
-        X_valid = X_valid.fillna(X_train.mean())
-        
-        # クラス重み
-        scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
-        
-        # パラメータ
-        params = {
-            'objective': 'binary',
-            'metric': 'binary_logloss',
-            'boosting_type': 'gbdt',
-            'scale_pos_weight': scale_pos_weight,
-            'random_state': 42,
-            'verbosity': -1,
-            'num_leaves': 31,
-            'learning_rate': 0.05,
-            'feature_fraction': 0.9,
-            'bagging_fraction': 0.8,
-            'bagging_freq': 5,
-            'min_child_samples': 20,
-            'n_estimators': 300
+        self.model_metrics = {
+            'model_name': 'CleanRandomForest',
+            'test_accuracy': test_accuracy,
+            'test_auc': test_auc,
+            'oob_score': oob_score,
+            'feature_count': len(self.feature_columns),
+            'training_samples': len(X_train)
         }
         
-        # モデル学習
-        model = lgb.LGBMClassifier(**params)
-        model.fit(X_train, y_train, 
-                 eval_set=[(X_valid, y_valid)],
-                 callbacks=[lgb.early_stopping(50), lgb.log_evaluation(0)])
+        # 特徴量重要度
+        self.feature_importance = pd.DataFrame({
+            'feature': self.feature_columns,
+            'importance': self.model.feature_importances_
+        }).sort_values('importance', ascending=False)
         
-        # 評価
-        y_pred = model.predict_proba(X_valid)[:, 1]
-        auc_score = roc_auc_score(y_valid, y_pred)
-        lgb_scores.append(auc_score)
-        lgb_models.append(model)
+        print(f"✅ モデル訓練完了")
+        print(f"   検証精度: {test_accuracy:.3f}")
+        print(f"   検証AUC: {test_auc:.3f}")
+        print(f"   OOB精度: {oob_score:.3f}")
         
-        print(f"Fold {fold+1} AUC: {auc_score:.4f}")
+        print(f"\n📊 特徴量重要度 Top 10:")
+        for _, row in self.feature_importance.head(10).iterrows():
+            print(f"      {row['feature']}: {row['importance']:.4f}")
+        
+        return self.model
     
-    print(f"\nLightGBM平均AUC: {np.mean(lgb_scores):.4f} ± {np.std(lgb_scores):.4f}")
-    print(f"改善率: {(np.mean(lgb_scores) - np.mean(baseline_scores)) / np.mean(baseline_scores) * 100:.1f}%")
-    
-    return tscv, baseline_scores, lgb_scores, lgb_models
-
-
-def optimize_hyperparameters(X, y, tscv, n_trials=20):
-    """Optunaによるハイパーパラメータ最適化"""
-    print("\n=== Optunaによるハイパーパラメータ最適化 ===")
-    print(f"試行回数: {n_trials}")
-    
-    def objective(trial):
-        params = {
-            'objective': 'binary',
-            'metric': 'binary_logloss',
-            'boosting_type': 'gbdt',
-            'verbosity': -1,
-            'random_state': 42,
-            'num_leaves': trial.suggest_int('num_leaves', 10, 100),
-            'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
-            'feature_fraction': trial.suggest_float('feature_fraction', 0.5, 1.0),
-            'bagging_fraction': trial.suggest_float('bagging_fraction', 0.5, 1.0),
-            'bagging_freq': trial.suggest_int('bagging_freq', 1, 10),
-            'min_child_samples': trial.suggest_int('min_child_samples', 10, 100),
-            'reg_alpha': trial.suggest_float('reg_alpha', 0.0, 1.0),
-            'reg_lambda': trial.suggest_float('reg_lambda', 0.0, 1.0),
+    def save_model(self, model_dir="models"):
+        """モデル保存"""
+        os.makedirs(model_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        model_data = {
+            'model': self.model,
+            'scaler': self.scaler,
+            'feature_columns': self.feature_columns,
+            'feature_importance': self.feature_importance,
+            'model_metrics': self.model_metrics,
+            'jockey_stats': self.jockey_stats,
+            'trainer_stats': self.trainer_stats
         }
         
-        cv_scores = []
+        filepath = f"{model_dir}/clean_model_{timestamp}.pkl"
+        joblib.dump(model_data, filepath)
         
-        for train_idx, valid_idx in tscv.split(X):
-            X_train, X_valid = X.iloc[train_idx], X.iloc[valid_idx]
-            y_train, y_valid = y.iloc[train_idx], y.iloc[valid_idx]
-            
-            X_train = X_train.fillna(X_train.mean())
-            X_valid = X_valid.fillna(X_train.mean())
-            
-            scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
-            params['scale_pos_weight'] = scale_pos_weight
-            
-            model = lgb.LGBMClassifier(**params, n_estimators=100)
-            model.fit(X_train, y_train,
-                     eval_set=[(X_valid, y_valid)],
-                     callbacks=[lgb.early_stopping(30), lgb.log_evaluation(0)])
-            
-            y_pred = model.predict_proba(X_valid)[:, 1]
-            cv_scores.append(roc_auc_score(y_valid, y_pred))
+        # 最新モデルとしても保存
+        latest_filepath = f"{model_dir}/clean_model_latest.pkl"
+        joblib.dump(model_data, latest_filepath)
         
-        return np.mean(cv_scores)
+        print(f"💾 モデル保存完了:")
+        print(f"   {filepath}")
+        print(f"   {latest_filepath}")
+        
+        return filepath
     
-    study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
-    study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+    def load_model(self, filepath):
+        """モデル読み込み"""
+        print(f"📂 モデル読み込み: {filepath}")
+        
+        try:
+            model_data = joblib.load(filepath)
+            
+            self.model = model_data['model']
+            self.scaler = model_data['scaler']
+            self.feature_columns = model_data['feature_columns']
+            self.feature_importance = model_data['feature_importance']
+            self.model_metrics = model_data['model_metrics']
+            self.jockey_stats = model_data.get('jockey_stats', {})
+            self.trainer_stats = model_data.get('trainer_stats', {})
+            
+            print(f"✅ モデル読み込み完了")
+            print(f"   AUC: {self.model_metrics.get('test_auc', 'N/A')}")
+            print(f"   特徴量数: {len(self.feature_columns)}個")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ モデル読み込みエラー: {e}")
+            return False
     
-    print(f"\n最適なAUCスコア: {study.best_value:.4f}")
-    print("\n最適なパラメータ:")
-    for key, value in study.best_params.items():
-        print(f"  {key}: {value}")
-    
-    return study
-
-
-def analyze_with_shap(model, X_test, sample_size=1000):
-    """SHAP値によるモデル解釈"""
-    print("\n=== SHAP値によるモデル解釈 ===")
-    
-    # サンプリング
-    sample_size = min(sample_size, len(X_test))
-    sample_idx = np.random.choice(X_test.index, size=sample_size, replace=False)
-    X_sample = X_test.loc[sample_idx]
-    
-    # SHAP値計算
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X_sample)
-    
-    if isinstance(shap_values, list):
-        shap_values = shap_values[1]
-    
-    # 特徴量重要度
-    feature_importance = pd.DataFrame({
-        'feature': X_sample.columns,
-        'importance': np.abs(shap_values).mean(axis=0)
-    }).sort_values('importance', ascending=False)
-    
-    print("\n重要な特徴量トップ20:")
-    for i, row in feature_importance.head(20).iterrows():
-        print(f"{row['feature']:30} 重要度: {row['importance']:.4f}")
-    
-    # プロット
-    plt.figure(figsize=(10, 8))
-    shap.summary_plot(shap_values, X_sample, plot_type="bar", show=False)
-    plt.title("特徴量重要度（SHAP値）", fontsize=16)
-    plt.tight_layout()
-    plt.savefig("shap_importance.png", dpi=300, bbox_inches='tight')
-    plt.show()
-    
-    plt.figure(figsize=(10, 8))
-    shap.summary_plot(shap_values, X_sample, show=False)
-    plt.title("特徴量の影響度分析", fontsize=16)
-    plt.tight_layout()
-    plt.savefig("shap_summary.png", dpi=300, bbox_inches='tight')
-    plt.show()
-    
-    return feature_importance
+    def run_training_pipeline(self, data_path="encoded/2020_2025encoded_data_v2.csv", optimize=True):
+        """完全な訓練パイプライン実行"""
+        print("🚀 クリーン機械学習訓練パイプライン開始")
+        print("💡 オッズを使わない真の機械学習モデル")
+        
+        # 1. データ読み込み
+        df = self.load_training_data(data_path)
+        if df is None:
+            return None
+        
+        # 2. 特徴量エンジニアリング
+        X, y = self.create_clean_features(df)
+        if X is None:
+            return None
+        
+        # 3. モデル訓練
+        model = self.train_model(X, y, optimize=optimize)
+        if model is None:
+            return None
+        
+        # 4. モデル保存
+        model_path = self.save_model()
+        
+        print(f"\n📊 訓練完了サマリー:")
+        print(f"   モデル: {self.model_metrics['model_name']}")
+        print(f"   AUC: {self.model_metrics['test_auc']:.3f}")
+        print(f"   精度: {self.model_metrics['test_accuracy']:.3f}")
+        print(f"   OOB精度: {self.model_metrics['oob_score']:.3f}")
+        print(f"   特徴量数: {self.model_metrics['feature_count']}個")
+        print(f"   訓練サンプル: {self.model_metrics['training_samples']:,}件")
+        print(f"   ⚡ オッズ非依存の真の機械学習")
+        
+        print(f"\n✅ クリーン機械学習訓練パイプライン完了")
+        return model_path
 
 
 def main():
-    """メイン処理"""
-    print("=" * 50)
-    print("競馬予測モデルの包括的改善")
-    print("=" * 50)
+    """メイン実行"""
+    trainer = CleanModelTrainer()
+    model_path = trainer.run_training_pipeline(optimize=False)  # 高速実行
     
-    # データ読み込み
-    df = load_race_data()
-    
-    # データ期間の確認
-    if 'actual_date' in df.columns:
-        print(f"\n=== 時系列データの確認 ===")
-        print(f"データ期間: {df['actual_date'].min()} ~ {df['actual_date'].max()}")
-        df['year'] = df['actual_date'].dt.year
-        print(f"\n年別レコード数:")
-        print(df['year'].value_counts().sort_index())
-    
-    # 特徴量エンジニアリング
-    df_features = create_domain_features(df)
-    
-    # ターゲット作成
-    df_features['target'] = (df_features['着順'] <= 3).astype(int)
-    
-    # 特徴量選択
-    exclude_cols = ['着順', 'target', 'オッズ', '人気', '上がり', '走破時間', '通過順', 
-                    '日付', 'actual_date', 'year', '月', 'race_id', 'race_id_str', '馬番']
-    feature_cols = [col for col in df_features.columns if col not in exclude_cols]
-    
-    print(f"\n使用する特徴量数: {len(feature_cols)}")
-    print(f"ターゲット分布:")
-    print(df_features['target'].value_counts())
-    print(f"正例（3着以内）の割合: {df_features['target'].mean():.2%}")
-    
-    # データを時系列順にソート
-    df_features = df_features.sort_values('actual_date').reset_index(drop=True)
-    
-    # 特徴量とターゲット
-    X = df_features[feature_cols]
-    y = df_features['target']
-    
-    # 交差検証
-    tscv, baseline_scores, lgb_scores, lgb_models = run_cross_validation(X, y, df_features)
-    
-    # ハイパーパラメータ最適化
-    study = optimize_hyperparameters(X, y, tscv, n_trials=20)
-    
-    # 最終モデルの学習
-    print("\n=== 最終モデルの学習 ===")
-    split_point = int(len(X) * 0.8)
-    X_train_final = X.iloc[:split_point]
-    y_train_final = y.iloc[:split_point]
-    X_test_final = X.iloc[split_point:]
-    y_test_final = y.iloc[split_point:]
-    
-    # 欠損値処理
-    X_train_final = X_train_final.fillna(X_train_final.mean())
-    X_test_final = X_test_final.fillna(X_train_final.mean())
-    
-    # 最適化されたパラメータでモデル学習
-    optimized_params = {
-        'objective': 'binary',
-        'metric': 'binary_logloss',
-        'boosting_type': 'gbdt',
-        'verbosity': -1,
-        'random_state': 42,
-        'n_estimators': 300,
-        'scale_pos_weight': (y_train_final == 0).sum() / (y_train_final == 1).sum(),
-        **study.best_params
-    }
-    
-    final_model = lgb.LGBMClassifier(**optimized_params)
-    final_model.fit(X_train_final, y_train_final)
-    
-    # 評価
-    y_pred_final = final_model.predict_proba(X_test_final)[:, 1]
-    final_auc = roc_auc_score(y_test_final, y_pred_final)
-    
-    print(f"テストAUC: {final_auc:.4f}")
-    
-    # SHAP分析
-    feature_importance = analyze_with_shap(final_model, X_test_final)
-    
-    # 結果サマリー
-    print("\n" + "=" * 50)
-    print("=== モデル性能比較 ===")
-    print(f"\n1. ベースライン（ロジスティック回帰）:")
-    print(f"   平均AUC: {np.mean(baseline_scores):.4f} ± {np.std(baseline_scores):.4f}")
-    
-    print(f"\n2. LightGBM（初期パラメータ）:")
-    print(f"   平均AUC: {np.mean(lgb_scores):.4f} ± {np.std(lgb_scores):.4f}")
-    print(f"   改善率: +{(np.mean(lgb_scores) - np.mean(baseline_scores)) / np.mean(baseline_scores) * 100:.1f}%")
-    
-    print(f"\n3. LightGBM（最適化後）:")
-    print(f"   テストAUC: {final_auc:.4f}")
-    print(f"   ベースラインからの改善: +{(final_auc - np.mean(baseline_scores)) / np.mean(baseline_scores) * 100:.1f}%")
-    
-    print("\n=== 実装した改善点 ===")
-    print("✅ 1. 競馬ドメイン知識を活かした特徴量エンジニアリング")
-    print(f"   - 作成した新規特徴量: {len(df_features.columns) - len(df.columns)}個")
-    print("✅ 2. TimeSeriesSplitによる適切な交差検証")
-    print("✅ 3. ベースラインモデルとの比較")
-    print("✅ 4. Optunaによるハイパーパラメータ最適化")
-    print("✅ 5. SHAP値によるモデル解釈性分析")
-    
-    # モデルとパラメータを保存
-    import joblib
-    joblib.dump(final_model, 'model/improved_model.pkl')
-    joblib.dump(optimized_params, 'model/optimized_params.pkl')
-    joblib.dump(feature_cols, 'model/feature_cols.pkl')
-    
-    print("\n✅ モデルを保存しました: model/improved_model.pkl")
+    if model_path:
+        print(f"\n🎉 訓練が完了しました！")
+        print(f"モデルファイル: {model_path}")
 
 
 if __name__ == "__main__":

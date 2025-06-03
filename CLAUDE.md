@@ -158,3 +158,8 @@ data = processor.create_target_variables(data)
 - Follow the established patterns for data loading and feature processing
 - Leverage the base strategy class for consistent backtest implementation
 - Use the logger from `src.core.utils.setup_logger()` for consistent logging
+
+## Development Guidelines
+
+- ファイルの修正を行う際は新しいファイルを作らず同じファイルを更新してください
+```
