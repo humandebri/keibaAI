@@ -182,6 +182,18 @@ class EnsembleRacePredictor:
         
         return ensemble_pred
     
+    def train(self, data: pd.DataFrame, feature_cols: List[str], 
+              target_col: str, race_id_col: str) -> Dict:
+        """データフレームからモデルを訓練（統一システム用）"""
+        # 特徴量とターゲットを準備
+        X = data[feature_cols].values
+        y = data[target_col].values
+        
+        # モデルを訓練
+        self.fit(X, y)
+        
+        return self.models
+    
     def predict_proba(self, X: np.ndarray, n_horses: int) -> np.ndarray:
         """各馬の勝率を予測"""
         # 着順予測

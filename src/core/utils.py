@@ -14,7 +14,6 @@ import pickle
 import json
 
 from .config import config, DATA_DIR, ENCODED_DIR, MODELS_DIR
-from ..features.unified_features import UnifiedFeatureEngine
 
 # LightGBMのエラー対策
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -147,7 +146,15 @@ class FeatureProcessor:
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.logger = logger or setup_logger(__name__)
         self.config = config.data
-        self.feature_engine = UnifiedFeatureEngine()
+        self._feature_engine = None
+    
+    @property
+    def feature_engine(self):
+        """遅延インポートでUnifiedFeatureEngineを取得"""
+        if self._feature_engine is None:
+            from ..features.unified_features import UnifiedFeatureEngine
+            self._feature_engine = UnifiedFeatureEngine()
+        return self._feature_engine
     
     def prepare_basic_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """基本的な特徴量の準備"""

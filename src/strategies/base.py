@@ -10,11 +10,8 @@ import numpy as np
 import lightgbm as lgb
 from pathlib import Path
 
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
-
-from core.config import config
-from core.utils import (
+from ..core.config import config
+from ..core.utils import (
     DataLoader, FeatureProcessor, ModelManager, 
     setup_logger, calculate_return_metrics, format_currency
 )
@@ -90,9 +87,19 @@ class BaseStrategy(ABC):
         """ベット額の計算"""
         pass
     
-    def run_backtest(self, initial_capital: float = 1_000_000) -> Dict:
-        """バックテストの実行"""
+    def run_backtest(self, data: pd.DataFrame, train_years: List[int], 
+                     test_years: List[int], feature_cols: List[str],
+                     initial_capital: float = 1_000_000) -> Dict:
+        """バックテストの実行（統一システム用）"""
         self.logger.info(f"Running backtest with initial capital: {format_currency(initial_capital)}")
+        
+        # データを分割
+        train_data = data[data['year'].isin(train_years)]
+        test_data = data[data['year'].isin(test_years)]
+        
+        self.train_data = train_data
+        self.test_data = test_data
+        self.feature_cols = feature_cols
         
         # モデル訓練
         model = self.train_model()

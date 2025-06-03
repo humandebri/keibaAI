@@ -76,6 +76,17 @@ def setup_args() -> argparse.ArgumentParser:
         default='results/backtest_results.json',
         help='結果出力先'
     )
+    backtest_parser.add_argument(
+        '--min-ev',
+        type=float,
+        default=1.2,
+        help='最小期待値'
+    )
+    backtest_parser.add_argument(
+        '--no-trifecta',
+        action='store_true',
+        help='三連単を無効にする'
+    )
     
     # データ収集コマンド
     collect_parser = subparsers.add_parser('collect', help='データ収集')
@@ -174,10 +185,20 @@ async def run_backtest(args) -> None:
     
     # 戦略の設定
     if args.strategy == 'advanced':
-        strategy = AdvancedBettingStrategy(config.backtest)
+        strategy = AdvancedBettingStrategy(
+            min_expected_value=args.min_ev,
+            enable_trifecta=not args.no_trifecta,
+            enable_quinella=True,
+            enable_wide=True
+        )
     else:
         # 他の戦略は後で実装
-        strategy = AdvancedBettingStrategy(config.backtest)
+        strategy = AdvancedBettingStrategy(
+            min_expected_value=args.min_ev,
+            enable_trifecta=not args.no_trifecta,
+            enable_quinella=True,
+            enable_wide=True
+        )
     
     system.set_strategy(strategy)
     
@@ -193,10 +214,23 @@ async def run_backtest(args) -> None:
     
     # 結果の概要表示
     print("\n📊 バックテスト結果:")
-    print(f"総収益: {results.get('total_return', 'N/A'):.2%}")
-    print(f"年間収益: {results.get('annual_return', 'N/A'):.2%}")
-    print(f"勝率: {results.get('win_rate', 'N/A'):.2%}")
-    print(f"取引数: {results.get('total_trades', 'N/A')}")
+    
+    # メトリクスの取得
+    metrics = results.get('metrics', {})
+    
+    # フォーマット付きで表示
+    total_return = metrics.get('total_return')
+    print(f"総収益: {total_return:.2%}" if isinstance(total_return, (int, float)) else f"総収益: {total_return}")
+    
+    annual_return = metrics.get('annual_return')
+    print(f"年間収益: {annual_return:.2%}" if isinstance(annual_return, (int, float)) else f"年間収益: {annual_return}")
+    
+    win_rate = metrics.get('win_rate')
+    print(f"勝率: {win_rate:.2%}" if isinstance(win_rate, (int, float)) else f"勝率: {win_rate}")
+    
+    total_bets = metrics.get('total_bets')
+    print(f"取引数: {total_bets}")
+    
     print(f"結果ファイル: {output_path}")
 
 

@@ -1,70 +1,1881 @@
 {
-  "initial_capital": 1000000,
-  "final_capital": 44360054.65012105,
-  "total_return": 43.36005465012105,
-  "total_trades": 3886,
-  "win_trades": 1204,
-  "win_rate": 0.30983015954709214,
-  "monthly_summary": {
-    "2024-07": {
-      "profit": 2773875.8246057094,
-      "bets": 298,
-      "wins": 88
+  "trades": [
+    {
+      "race_id": "202101010104",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5212658992455885,
+        "win_probability": 0.006515823740569856,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 5000,
+      "profit": -5000,
+      "capital": 995000,
+      "is_win": false
     },
-    "2024-08": {
-      "profit": 6726203.457649073,
-      "bets": 464,
-      "wins": 144
+    {
+      "race_id": "202101010102",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.6246567978212288,
+        "win_probability": 0.0027886464188447715,
+        "estimated_odds": 224.0,
+        "actual_odds": 224.0
+      },
+      "amount": 4400,
+      "profit": -4400,
+      "capital": 990600,
+      "is_win": false
     },
-    "2024-09": {
-      "profit": 3308801.155323922,
-      "bets": 386,
-      "wins": 109
+    {
+      "race_id": "202101010102",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.6023476264704707,
+        "win_probability": 0.007529345330880883,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 4900,
+      "profit": -4900,
+      "capital": 985700,
+      "is_win": false
     },
-    "2024-06": {
-      "profit": 3544986.1295080744,
-      "bets": 329,
-      "wins": 101
+    {
+      "race_id": "202101010102",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          5
+        ],
+        "expected_value": 0.574173647947441,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 4900,
+      "profit": -4900,
+      "capital": 980800,
+      "is_win": false
     },
-    "2024-04": {
-      "profit": 3712096.0855866414,
-      "bets": 372,
-      "wins": 117
+    {
+      "race_id": "202101010102",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5616323431964523,
+        "win_probability": 0.0027263705980410304,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 4400,
+      "profit": -4400,
+      "capital": 976400,
+      "is_win": false
     },
-    "2024-11": {
-      "profit": 3366745.9352678834,
-      "bets": 296,
-      "wins": 86
+    {
+      "race_id": "202101010102",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4800,
+      "profit": -4800,
+      "capital": 971600,
+      "is_win": false
     },
-    "2024-05": {
-      "profit": 3193320.24276449,
-      "bets": 334,
-      "wins": 98
+    {
+      "race_id": "202101010106",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          5
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4800,
+      "profit": -4800,
+      "capital": 966800,
+      "is_win": false
     },
-    "2024-10": {
-      "profit": 3637312.739330106,
-      "bets": 282,
-      "wins": 102
+    {
+      "race_id": "202101010109",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.5901384931778212,
+        "win_probability": 0.0071968108924124535,
+        "estimated_odds": 82.0,
+        "actual_odds": 82.0
+      },
+      "amount": 4800,
+      "profit": -4800,
+      "capital": 962000,
+      "is_win": false
     },
-    "2024-01": {
-      "profit": 3352844.4356804825,
-      "bets": 326,
-      "wins": 92
+    {
+      "race_id": "202101010109",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          5
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4800,
+      "profit": -4800,
+      "capital": 957200,
+      "is_win": false
     },
-    "2024-02": {
-      "profit": 2850128.0396071523,
-      "bets": 258,
-      "wins": 88
+    {
+      "race_id": "202101010107",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.7894106011149048,
+        "win_probability": 0.003621149546398646,
+        "estimated_odds": 218.0,
+        "actual_odds": 218.0
+      },
+      "amount": 4300,
+      "profit": -4300,
+      "capital": 952900,
+      "is_win": false
     },
-    "2024-03": {
-      "profit": 3620140.7993193287,
-      "bets": 305,
-      "wins": 99
+    {
+      "race_id": "202101010107",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.7629959693358902,
+        "win_probability": 0.003703863928815001,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 4200,
+      "profit": -4200,
+      "capital": 948700,
+      "is_win": false
     },
-    "2024-12": {
-      "profit": 3273599.8054781035,
-      "bets": 236,
-      "wins": 80
+    {
+      "race_id": "202101010107",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.7626140944715549,
+        "win_probability": 0.009777103775276345,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 4700,
+      "profit": -4700,
+      "capital": 944000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010107",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.7400320129772371,
+        "win_probability": 0.010000432607800501,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4700,
+      "profit": -4700,
+      "capital": 939300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010110",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.6162937588899067,
+        "win_probability": 0.021399088850343983,
+        "estimated_odds": 28.8,
+        "actual_odds": 28.8
+      },
+      "amount": 4600,
+      "profit": -4600,
+      "capital": 934700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010110",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.6086851939653402,
+        "win_probability": 0.007925588463090365,
+        "estimated_odds": 76.80000000000001,
+        "actual_odds": 76.80000000000001
+      },
+      "amount": 4200,
+      "profit": -4200,
+      "capital": 930500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010110",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.590614852269494,
+        "win_probability": 0.021399088850343983,
+        "estimated_odds": 27.6,
+        "actual_odds": 27.6
+      },
+      "amount": 4600,
+      "profit": -4600,
+      "capital": 925900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010110",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          5,
+          4,
+          8
+        ],
+        "expected_value": 0.5657819430459018,
+        "win_probability": 0.0006258649812454666,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 922700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010202",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.7894106011149051,
+        "win_probability": 0.0036211495463986474,
+        "estimated_odds": 218.0,
+        "actual_odds": 218.0
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 918600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010202",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.7626140944715553,
+        "win_probability": 0.009777103775276349,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 4500,
+      "profit": -4500,
+      "capital": 914100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010202",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          1,
+          5
+        ],
+        "expected_value": 0.7444011465920785,
+        "win_probability": 0.003613597798990672,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 910000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010111",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5076738185878562,
+        "win_probability": 0.0021511602482536278,
+        "estimated_odds": 236.0,
+        "actual_odds": 236.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 906000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010201",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          1,
+          5
+        ],
+        "expected_value": 0.6584057391695208,
+        "win_probability": 0.002720684872601326,
+        "estimated_odds": 242.0,
+        "actual_odds": 242.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 902000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010201",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.624656797821229,
+        "win_probability": 0.0027886464188447723,
+        "estimated_odds": 224.0,
+        "actual_odds": 224.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 898000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010201",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.6023476264704708,
+        "win_probability": 0.007529345330880885,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 4400,
+      "profit": -4400,
+      "capital": 893600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010203",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          3
+        ],
+        "expected_value": 0.617634994465684,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 86.0,
+        "actual_odds": 86.0
+      },
+      "amount": 4400,
+      "profit": -4400,
+      "capital": 889200,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010203",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          4
+        ],
+        "expected_value": 0.6032713899432263,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 84.0,
+        "actual_odds": 84.0
+      },
+      "amount": 4400,
+      "profit": -4400,
+      "capital": 884800,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010203",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.5901384931778215,
+        "win_probability": 0.007196810892412458,
+        "estimated_odds": 82.0,
+        "actual_odds": 82.0
+      },
+      "amount": 4400,
+      "profit": -4400,
+      "capital": 880400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010203",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          2,
+          6
+        ],
+        "expected_value": 0.5767851929914811,
+        "win_probability": 0.002720684872601326,
+        "estimated_odds": 212.0,
+        "actual_odds": 212.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 876500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010203",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5616323431964525,
+        "win_probability": 0.0027263705980410313,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 872600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010302",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.6106859389052347,
+        "win_probability": 0.008252512687908577,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4300,
+      "profit": -4300,
+      "capital": 868300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010306",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          5,
+          1,
+          8
+        ],
+        "expected_value": 0.564639851475596,
+        "win_probability": 0.0006246016056145973,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 3000,
+      "profit": -3000,
+      "capital": 865300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010307",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4300,
+      "profit": -4300,
+      "capital": 861000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010308",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.7626140944715545,
+        "win_probability": 0.00977710377527634,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 4300,
+      "profit": -4300,
+      "capital": 856700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010310",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.6276361851275599,
+        "win_probability": 0.020921206170918662,
+        "estimated_odds": 30.0,
+        "actual_odds": 30.0
+      },
+      "amount": 4200,
+      "profit": -4200,
+      "capital": 852500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010310",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          3,
+          1,
+          4
+        ],
+        "expected_value": 0.5560969759131918,
+        "win_probability": 0.0006151515220278671,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 2900,
+      "profit": -2900,
+      "capital": 849600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010310",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          3,
+          4,
+          1
+        ],
+        "expected_value": 0.5560597264693292,
+        "win_probability": 0.0006151103168908509,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 2900,
+      "profit": -2900,
+      "capital": 846700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010411",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5550516519744692,
+        "win_probability": 0.002413268052062909,
+        "estimated_odds": 230.0,
+        "actual_odds": 230.0
+      },
+      "amount": 3800,
+      "profit": -3800,
+      "capital": 842900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010411",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5342975467267281,
+        "win_probability": 0.006515823740569855,
+        "estimated_odds": 82.0,
+        "actual_odds": 82.0
+      },
+      "amount": 4200,
+      "profit": -4200,
+      "capital": 838700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010411",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          4
+        ],
+        "expected_value": 0.5085622318758877,
+        "win_probability": 0.006357027898448596,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 834600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010501",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.5594512467180196,
+        "win_probability": 0.007361200614710784,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 830500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010505",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          3
+        ],
+        "expected_value": 0.6263272775904761,
+        "win_probability": 0.020877575919682537,
+        "estimated_odds": 30.0,
+        "actual_odds": 30.0
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 826400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010505",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.6025307377224575,
+        "win_probability": 0.020921206170918662,
+        "estimated_odds": 28.8,
+        "actual_odds": 28.8
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 822300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010505",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5762210953832381,
+        "win_probability": 0.020877575919682537,
+        "estimated_odds": 27.6,
+        "actual_odds": 27.6
+      },
+      "amount": 4100,
+      "profit": -4100,
+      "capital": 818200,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010505",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          4,
+          1,
+          3
+        ],
+        "expected_value": 0.5560969759131918,
+        "win_probability": 0.0006151515220278671,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 2800,
+      "profit": -2800,
+      "capital": 815400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010505",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          4,
+          3,
+          1
+        ],
+        "expected_value": 0.5560597264693292,
+        "win_probability": 0.0006151103168908509,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 2800,
+      "profit": -2800,
+      "capital": 812600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010506",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          3
+        ],
+        "expected_value": 0.6423535901069112,
+        "win_probability": 0.008235302437268091,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 808600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010506",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.6246352413683529,
+        "win_probability": 0.008441016775248012,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 804600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010510",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.5888960491768626,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 800600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010510",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          5
+        ],
+        "expected_value": 0.5582845358577919,
+        "win_probability": 0.0073458491560235775,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 4000,
+      "profit": -4000,
+      "capital": 796600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010511",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.6183408516357056,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 84.0,
+        "actual_odds": 84.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 792700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010511",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          6
+        ],
+        "expected_value": 0.5435928375457447,
+        "win_probability": 0.0073458491560235775,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 788800,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010604",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.5613512496081717,
+        "win_probability": 0.007196810892412458,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 784900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010604",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5458169718533952,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 781000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010604",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          3
+        ],
+        "expected_value": 0.5314533673309374,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3900,
+      "profit": -3900,
+      "capital": 777100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010607",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3800,
+      "profit": -3800,
+      "capital": 773300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101010609",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5314533673309374,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3800,
+      "profit": -3800,
+      "capital": 769500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020102",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.618925736747471,
+        "win_probability": 0.0071968108924124535,
+        "estimated_odds": 86.0,
+        "actual_odds": 86.0
+      },
+      "amount": 3800,
+      "profit": -3800,
+      "capital": 765700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020102",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5601805763758526,
+        "win_probability": 0.00718180226122888,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 3800,
+      "profit": -3800,
+      "capital": 761900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020102",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          3
+        ],
+        "expected_value": 0.5458169718533948,
+        "win_probability": 0.00718180226122888,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3800,
+      "profit": -3800,
+      "capital": 758100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020105",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5100464737986018,
+        "win_probability": 0.01700154912662006,
+        "estimated_odds": 30.0,
+        "actual_odds": 30.0
+      },
+      "amount": 3700,
+      "profit": -3700,
+      "capital": 754400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020107",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.5779905667846984,
+        "win_probability": 0.0027263705980410304,
+        "estimated_odds": 212.0,
+        "actual_odds": 212.0
+      },
+      "amount": 3300,
+      "profit": -3300,
+      "capital": 751100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020107",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.5594512467180194,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3700,
+      "profit": -3700,
+      "capital": 747400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020108",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          6
+        ],
+        "expected_value": 0.6170513291059805,
+        "win_probability": 0.0073458491560235775,
+        "estimated_odds": 84.0,
+        "actual_odds": 84.0
+      },
+      "amount": 3700,
+      "profit": -3700,
+      "capital": 743700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020108",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5888960491768626,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 3700,
+      "profit": -3700,
+      "capital": 740000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020108",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.574173647947441,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 3700,
+      "profit": -3700,
+      "capital": 736300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020108",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          3
+        ],
+        "expected_value": 0.5458169718533948,
+        "win_probability": 0.00718180226122888,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3600,
+      "profit": -3600,
+      "capital": 732700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020108",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5314533673309371,
+        "win_probability": 0.00718180226122888,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3600,
+      "profit": -3600,
+      "capital": 729100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020111",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.7362180187237191,
+        "win_probability": 0.008560674636322315,
+        "estimated_odds": 86.0,
+        "actual_odds": 86.0
+      },
+      "amount": 3600,
+      "profit": -3600,
+      "capital": 725500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020111",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          3
+        ],
+        "expected_value": 0.7015717077979392,
+        "win_probability": 0.008352044140451657,
+        "estimated_odds": 84.0,
+        "actual_odds": 84.0
+      },
+      "amount": 3600,
+      "profit": -3600,
+      "capital": 721900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020111",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          6
+        ],
+        "expected_value": 0.7005113816592674,
+        "win_probability": 0.008542821727552042,
+        "estimated_odds": 82.0,
+        "actual_odds": 82.0
+      },
+      "amount": 3600,
+      "profit": -3600,
+      "capital": 718300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020202",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          1,
+          5
+        ],
+        "expected_value": 0.7877643201799664,
+        "win_probability": 0.003613597798990672,
+        "estimated_odds": 218.0,
+        "actual_odds": 218.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 715100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020112",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          6
+        ],
+        "expected_value": 0.5876679324818862,
+        "win_probability": 0.0073458491560235775,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 3500,
+      "profit": -3500,
+      "capital": 711600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020112",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5594512467180194,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3500,
+      "profit": -3500,
+      "capital": 708100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020203",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          5
+        ],
+        "expected_value": 0.5594512467180194,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3500,
+      "profit": -3500,
+      "capital": 704600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020204",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          6
+        ],
+        "expected_value": 0.5876679324818861,
+        "win_probability": 0.007345849156023576,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 3500,
+      "profit": -3500,
+      "capital": 701100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020204",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5601805763758525,
+        "win_probability": 0.007181802261228878,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 3500,
+      "profit": -3500,
+      "capital": 697600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020204",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3400,
+      "profit": -3400,
+      "capital": 694200,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020206",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          2,
+          6
+        ],
+        "expected_value": 0.7444011465920782,
+        "win_probability": 0.003613597798990671,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 691100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020208",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5447288454885978,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3400,
+      "profit": -3400,
+      "capital": 687700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020209",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          4
+        ],
+        "expected_value": 0.7073484104766654,
+        "win_probability": 0.009558762303738722,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3400,
+      "profit": -3400,
+      "capital": 684300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020301",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          5
+        ],
+        "expected_value": 0.590614852269494,
+        "win_probability": 0.021399088850343983,
+        "estimated_odds": 27.6,
+        "actual_odds": 27.6
+      },
+      "amount": 3400,
+      "profit": -3400,
+      "capital": 680900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020301",
+      "bet": {
+        "type": "三連単",
+        "selection": [
+          5,
+          3,
+          8
+        ],
+        "expected_value": 0.5657819430459018,
+        "win_probability": 0.0006258649812454666,
+        "estimated_odds": 904.0,
+        "actual_odds": 904.0
+      },
+      "amount": 2300,
+      "profit": -2300,
+      "capital": 678600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020305",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          2,
+          6
+        ],
+        "expected_value": 0.6467532044198354,
+        "win_probability": 0.003139578662232211,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 3000,
+      "profit": -3000,
+      "capital": 675600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020305",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          3
+        ],
+        "expected_value": 0.6298543927568729,
+        "win_probability": 0.008287557799432538,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3300,
+      "profit": -3300,
+      "capital": 672300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020305",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          6
+        ],
+        "expected_value": 0.6272878167139958,
+        "win_probability": 0.00847686238802697,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3300,
+      "profit": -3300,
+      "capital": 669000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020306",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5458169718533952,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3300,
+      "profit": -3300,
+      "capital": 665700,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020306",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          5
+        ],
+        "expected_value": 0.543592837545745,
+        "win_probability": 0.007345849156023581,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3300,
+      "profit": -3300,
+      "capital": 662400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020312",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.6629088232689416,
+        "win_probability": 0.003218003996451173,
+        "estimated_odds": 206.0,
+        "actual_odds": 206.0
+      },
+      "amount": 2900,
+      "profit": -2900,
+      "capital": 659500,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020312",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          5,
+          6
+        ],
+        "expected_value": 0.6429571984909442,
+        "win_probability": 0.008688610790418166,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 656300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020404",
+      "bet": {
+        "type": "馬連",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.6434234611376832,
+        "win_probability": 0.0027263705980410304,
+        "estimated_odds": 236.0,
+        "actual_odds": 236.0
+      },
+      "amount": 2900,
+      "profit": -2900,
+      "capital": 653400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020404",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.6183408516357056,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 84.0,
+        "actual_odds": 84.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 650200,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020404",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          3
+        ],
+        "expected_value": 0.5458169718533948,
+        "win_probability": 0.00718180226122888,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 647000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020405",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          3,
+          6
+        ],
+        "expected_value": 0.5100464737986016,
+        "win_probability": 0.017001549126620052,
+        "estimated_odds": 30.0,
+        "actual_odds": 30.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 643800,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020406",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          5
+        ],
+        "expected_value": 0.7610236964674355,
+        "win_probability": 0.009756714057274815,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 640600,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020406",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          4
+        ],
+        "expected_value": 0.7249509224695135,
+        "win_probability": 0.009538827927230441,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3200,
+      "profit": -3200,
+      "capital": 637400,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020406",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.7235056793704499,
+        "win_probability": 0.009777103775276349,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 634300,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020407",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          5
+        ],
+        "expected_value": 0.5876679324818862,
+        "win_probability": 0.0073458491560235775,
+        "estimated_odds": 80.0,
+        "actual_odds": 80.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 631200,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020407",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          5
+        ],
+        "expected_value": 0.574173647947441,
+        "win_probability": 0.0073612006147107814,
+        "estimated_odds": 78.0,
+        "actual_odds": 78.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 628100,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020407",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          1,
+          4
+        ],
+        "expected_value": 0.5314533673309371,
+        "win_probability": 0.00718180226122888,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 625000,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020410",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          4
+        ],
+        "expected_value": 0.617634994465684,
+        "win_probability": 0.007181802261228884,
+        "estimated_odds": 86.0,
+        "actual_odds": 86.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 621900,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020410",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          4,
+          6
+        ],
+        "expected_value": 0.5594512467180196,
+        "win_probability": 0.007361200614710784,
+        "estimated_odds": 76.0,
+        "actual_odds": 76.0
+      },
+      "amount": 3100,
+      "profit": -3100,
+      "capital": 618800,
+      "is_win": false
+    },
+    {
+      "race_id": "202101020410",
+      "bet": {
+        "type": "ワイド",
+        "selection": [
+          2,
+          6
+        ],
+        "expected_value": 0.543592837545745,
+        "win_probability": 0.007345849156023581,
+        "estimated_odds": 74.0,
+        "actual_odds": 74.0
+      },
+      "amount": 3000,
+      "profit": -3000,
+      "capital": 615800,
+      "is_win": false
+    }
+  ],
+  "metrics": {
+    "initial_capital": 1000000,
+    "final_capital": 615800,
+    "total_return": -0.3842,
+    "annual_return": -0.3842,
+    "total_bets": 102,
+    "total_wins": 0,
+    "win_rate": 0.0,
+    "avg_expected_value": 0.6050971931018465,
+    "avg_bet": 3766.6666666666665,
+    "by_type": {
+      "trifecta": {
+        "count": 7,
+        "wins": 0,
+        "win_rate": 0.0,
+        "profit": -19900,
+        "roi": -0.2842857142857143
+      },
+      "quinella": {
+        "count": 19,
+        "wins": 0,
+        "win_rate": 0.0,
+        "profit": -71700,
+        "roi": -0.3773684210526316
+      },
+      "wide": {
+        "count": 76,
+        "wins": 0,
+        "win_rate": 0.0,
+        "profit": -292600,
+        "roi": -0.385
+      }
     }
   }
 }

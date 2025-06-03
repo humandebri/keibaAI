@@ -37,9 +37,9 @@ class BasicFeatureBuilder(FeatureBuilder):
         """基本的な特徴量を構築"""
         result = df.copy()
         
-        # 1. 人気とオッズの関係
-        if '人気' in df.columns and 'オッズ' in df.columns:
-            result = self._build_popularity_odds_features(result)
+        # 1. 人気関連特徴量（オッズは除外）
+        if '人気' in df.columns:
+            result = self._build_popularity_features(result)
         
         # 2. 馬番（枠番）の影響
         if '馬番' in df.columns:
@@ -62,43 +62,38 @@ class BasicFeatureBuilder(FeatureBuilder):
         
         return result
     
-    def _build_popularity_odds_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """人気・オッズ関連特徴量"""
-        # オッズの数値化
-        odds_numeric = pd.to_numeric(df['オッズ'], errors='coerce').fillna(99.9)
-        df['オッズ_numeric'] = odds_numeric
-        
-        # 人気とオッズの関係
-        df['popularity_odds_ratio'] = df['人気'] / (odds_numeric + 1)
+    def _build_popularity_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """人気関連特徴量（オッズを除外）"""
+        # 人気関連フラグ
         df['is_favorite'] = (df['人気'] <= 3).astype(int)
         df['is_longshot'] = (df['人気'] >= 10).astype(int)
         
-        # レース内でのランク
-        df['odds_rank'] = df.groupby('race_id')['オッズ_numeric'].rank()
+        # 人気の正規化
         df['popularity_rank_norm'] = df['人気'] / df.groupby('race_id')['人気'].transform('count')
         
-        # オッズレンジ
-        df['odds_low'] = (odds_numeric <= 2.0).astype(int)
-        df['odds_medium'] = ((odds_numeric > 2.0) & (odds_numeric <= 10.0)).astype(int)
-        df['odds_high'] = (odds_numeric > 10.0).astype(int)
+        # 人気の相対順位
+        df['popularity_rank'] = df.groupby('race_id')['人気'].rank()
         
         return df
     
     def _build_draw_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """馬番・枠番関連特徴量"""
-        # 枠番の計算
-        df['枠番'] = ((df['馬番'] - 1) // 2) + 1
+        # 枠番の計算（馬番から導出）
+        df['枠番'] = ((df['馬番'] - 1) // 2) + 1  # 1,2→1, 3,4→2, ...
+        df['枠番'] = df['枠番'].clip(upper=8)  # 最大8枠
         
-        # ポジション関連
+        # ポジション関連特徴量
         df['is_inside_draw'] = (df['馬番'] <= 4).astype(int)
-        df['is_outside_draw'] = (df['馬番'] >= 12).astype(int)
-        df['is_inner_post'] = (df['枠番'] <= 3).astype(int)
+        df['is_outside_draw'] = (df['馬番'] >= 13).astype(int)
+        df['is_inner_post'] = (df['枠番'] <= 2).astype(int)
         df['is_outer_post'] = (df['枠番'] >= 7).astype(int)
         
-        # 相対ポジション
+        # 相対位置
         if '出走頭数' in df.columns:
             df['draw_position_ratio'] = df['馬番'] / df['出走頭数']
-            df['frame_position_ratio'] = df['枠番'] / 8  # 8枠で正規化
+        else:
+            df['draw_position_ratio'] = df['馬番'] / df.groupby('race_id')['馬番'].transform('count')
+        df['frame_position_ratio'] = df['枠番'] / 8.0
         
         return df
     
@@ -177,10 +172,9 @@ class BasicFeatureBuilder(FeatureBuilder):
         return df
     
     def get_feature_names(self) -> List[str]:
-        """構築される特徴量名のリスト"""
+        """構築される特徴量名のリスト（オッズ関連は除外）"""
         return [
-            'オッズ_numeric', 'popularity_odds_ratio', 'is_favorite', 'is_longshot',
-            'odds_rank', 'popularity_rank_norm', 'odds_low', 'odds_medium', 'odds_high',
+            'is_favorite', 'is_longshot', 'popularity_rank_norm', 'popularity_rank',
             '枠番', 'is_inside_draw', 'is_outside_draw', 'is_inner_post', 'is_outer_post',
             'draw_position_ratio', 'frame_position_ratio',
             'weight_heavy', 'weight_light', 'weight_medium', 'weight_norm', 'weight_relative',
@@ -487,6 +481,260 @@ class PayoutFeatureBuilder(FeatureBuilder):
         return ['単勝最高配当', '複勝最低配当', '三連単配当', '高配当レース']
 
 
+class SpeedIndexFeatureBuilder(FeatureBuilder):
+    """スピード指数関連特徴量ビルダー"""
+    
+    def build(self, df: pd.DataFrame) -> pd.DataFrame:
+        """スピード指数特徴量を構築"""
+        result = df.copy()
+        
+        # 基本スピード指数（距離/時間）
+        if '距離' in df.columns and '走破時間' in df.columns:
+            result = self._build_basic_speed_index(result)
+        
+        # トラック調整スピード指数
+        if 'track_condition_numeric' in df.columns:
+            result = self._build_track_adjusted_speed(result)
+        
+        # 過去走からのスピード関連特徴量
+        result = self._build_historical_speed_features(result)
+        
+        return result
+    
+    def _build_basic_speed_index(self, df: pd.DataFrame) -> pd.DataFrame:
+        """基本スピード指数の計算"""
+        # 走破時間を秒に変換
+        time_seconds = self._convert_time_to_seconds(df['走破時間'])
+        
+        # 基本スピード指数 = 距離 / 時間
+        df['基本スピード指数'] = df['距離'] / time_seconds
+        
+        # スピード指数の正規化（レース内）
+        df['スピード指数_正規化'] = df.groupby('race_id')['基本スピード指数'].transform(
+            lambda x: (x - x.mean()) / x.std() if x.std() > 0 else 0
+        )
+        
+        return df
+    
+    def _build_track_adjusted_speed(self, df: pd.DataFrame) -> pd.DataFrame:
+        """トラック調整スピード指数"""
+        if '基本スピード指数' in df.columns and 'track_condition_numeric' in df.columns:
+            # 馬場状態による調整係数
+            track_adjustment = 1.0 + (1.0 - df['track_condition_numeric']) * 0.05
+            df['トラック調整スピード'] = df['基本スピード指数'] * track_adjustment
+        
+        return df
+    
+    def _build_historical_speed_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """過去走のスピード関連特徴量"""
+        # 過去走のスピード指数を計算
+        speed_columns = []
+        for i in range(1, 4):  # 過去3走
+            distance_col = f'距離{i}'
+            time_col = f'走破時間{i}'
+            if distance_col in df.columns and time_col in df.columns:
+                time_seconds = self._convert_time_to_seconds(df[time_col])
+                df[f'スピード指数{i}'] = df[distance_col] / time_seconds
+                speed_columns.append(f'スピード指数{i}')
+        
+        # ベストスピード指数（過去3走の最高値）
+        if speed_columns:
+            df['ベストスピード指数'] = df[speed_columns].max(axis=1, skipna=True)
+            df['平均スピード指数'] = df[speed_columns].mean(axis=1, skipna=True)
+            
+            # スピード指数トレンド（最新 - 最古）
+            if len(speed_columns) >= 2:
+                df['スピード指数トレンド'] = df[speed_columns[0]] - df[speed_columns[-1]]
+        
+        return df
+    
+    def _convert_time_to_seconds(self, time_series: pd.Series) -> pd.Series:
+        """時間を秒に変換"""
+        def time_to_seconds(time_str):
+            if pd.isna(time_str):
+                return np.nan
+            try:
+                if isinstance(time_str, (int, float)):
+                    return float(time_str)
+                time_str = str(time_str)
+                if ':' in time_str:
+                    parts = time_str.split(':')
+                    minutes = float(parts[0])
+                    seconds = float(parts[1])
+                    return minutes * 60 + seconds
+                else:
+                    return float(time_str)
+            except:
+                return np.nan
+        
+        return time_series.apply(time_to_seconds)
+    
+    def get_feature_names(self) -> List[str]:
+        """構築される特徴量名のリスト"""
+        return [
+            '基本スピード指数', 'スピード指数_正規化', 'トラック調整スピード',
+            'スピード指数1', 'スピード指数2', 'スピード指数3',
+            'ベストスピード指数', '平均スピード指数', 'スピード指数トレンド'
+        ]
+
+
+class RelativeRankingFeatureBuilder(FeatureBuilder):
+    """レース内相対順位特徴量ビルダー"""
+    
+    def build(self, df: pd.DataFrame) -> pd.DataFrame:
+        """相対順位特徴量を構築"""
+        result = df.copy()
+        
+        # レース内での相対順位
+        if 'race_id' in df.columns:
+            result = self._build_race_relative_rankings(result)
+        
+        # パフォーマンス関連順位
+        result = self._build_performance_rankings(result)
+        
+        return result
+    
+    def _build_race_relative_rankings(self, df: pd.DataFrame) -> pd.DataFrame:
+        """レース内相対順位の計算"""
+        # 人気順位（既に存在する場合はスキップ）
+        if '人気' in df.columns and 'popularity_rank_norm' not in df.columns:
+            df['人気順位_レース内'] = df.groupby('race_id')['人気'].rank()
+            df['人気順位_正規化'] = df['人気順位_レース内'] / df.groupby('race_id')['人気順位_レース内'].transform('count')
+        
+        # オッズ順位
+        if 'オッズ' in df.columns:
+            df['オッズ順位_レース内'] = df.groupby('race_id')['オッズ'].rank()
+            df['オッズ順位_正規化'] = df['オッズ順位_レース内'] / df.groupby('race_id')['オッズ順位_レース内'].transform('count')
+        
+        # 斤量順位
+        if '斤量' in df.columns:
+            df['斤量順位_レース内'] = df.groupby('race_id')['斤量'].rank(ascending=False)  # 重い方が上位
+            df['斤量順位_正規化'] = df['斤量順位_レース内'] / df.groupby('race_id')['斤量順位_レース内'].transform('count')
+        
+        # 体重順位
+        if '体重_numeric' in df.columns:
+            df['体重順位_レース内'] = df.groupby('race_id')['体重_numeric'].rank(ascending=False)
+            df['体重順位_正規化'] = df['体重順位_レース内'] / df.groupby('race_id')['体重順位_レース内'].transform('count')
+        
+        return df
+    
+    def _build_performance_rankings(self, df: pd.DataFrame) -> pd.DataFrame:
+        """パフォーマンス関連順位"""
+        # スピード指数順位
+        if '基本スピード指数' in df.columns:
+            df['スピード順位_レース内'] = df.groupby('race_id')['基本スピード指数'].rank(ascending=False)
+            df['スピード順位_正規化'] = df['スピード順位_レース内'] / df.groupby('race_id')['スピード順位_レース内'].transform('count')
+        
+        # 過去成績順位
+        if 'horse_win_rate' in df.columns:
+            df['勝率順位_レース内'] = df.groupby('race_id')['horse_win_rate'].rank(ascending=False)
+            df['勝率順位_正規化'] = df['勝率順位_レース内'] / df.groupby('race_id')['勝率順位_レース内'].transform('count')
+        
+        return df
+    
+    def get_feature_names(self) -> List[str]:
+        """構築される特徴量名のリスト"""
+        return [
+            '人気順位_レース内', '人気順位_正規化',
+            'オッズ順位_レース内', 'オッズ順位_正規化',
+            '斤量順位_レース内', '斤量順位_正規化',
+            '体重順位_レース内', '体重順位_正規化',
+            'スピード順位_レース内', 'スピード順位_正規化',
+            '勝率順位_レース内', '勝率順位_正規化'
+        ]
+
+
+class ChangeDetectionFeatureBuilder(FeatureBuilder):
+    """変化検出特徴量ビルダー（クラス・距離・コース変更など）"""
+    
+    def build(self, df: pd.DataFrame) -> pd.DataFrame:
+        """変化検出特徴量を構築"""
+        result = df.copy()
+        
+        # クラス変化
+        if 'クラス' in df.columns and 'クラス1' in df.columns:
+            result = self._build_class_changes(result)
+        
+        # 距離変化
+        if '距離' in df.columns and '距離1' in df.columns:
+            result = self._build_distance_changes(result)
+        
+        # コース変化
+        if '芝・ダート' in df.columns and '芝・ダート1' in df.columns:
+            result = self._build_surface_changes(result)
+        
+        # 負担重量比
+        if '斤量' in df.columns and '体重_numeric' in df.columns:
+            result = self._build_weight_burden_ratio(result)
+        
+        return result
+    
+    def _build_class_changes(self, df: pd.DataFrame) -> pd.DataFrame:
+        """クラス変化の検出"""
+        df['クラス変化'] = df['クラス'] - df['クラス1']
+        df['クラス昇級'] = (df['クラス変化'] > 0).astype(int)
+        df['クラス降級'] = (df['クラス変化'] < 0).astype(int)
+        df['クラス維持'] = (df['クラス変化'] == 0).astype(int)
+        
+        return df
+    
+    def _build_distance_changes(self, df: pd.DataFrame) -> pd.DataFrame:
+        """距離変化の検出"""
+        df['距離変化_絶対値'] = (df['距離'] - df['距離1']).abs()
+        df['距離延長'] = (df['距離'] > df['距離1']).astype(int)
+        df['距離短縮'] = (df['距離'] < df['距離1']).astype(int)
+        df['距離変化率'] = (df['距離'] - df['距離1']) / df['距離1']
+        
+        # 距離カテゴリ変化
+        def distance_category(distance):
+            if pd.isna(distance):
+                return 0
+            if distance <= 1200:
+                return 1  # スプリント
+            elif distance <= 1600:
+                return 2  # マイル
+            elif distance <= 2200:
+                return 3  # 中距離
+            else:
+                return 4  # 長距離
+        
+        df['距離カテゴリ'] = df['距離'].apply(distance_category)
+        df['距離カテゴリ1'] = df['距離1'].apply(distance_category)
+        df['距離カテゴリ変化'] = df['距離カテゴリ'] - df['距離カテゴリ1']
+        
+        return df
+    
+    def _build_surface_changes(self, df: pd.DataFrame) -> pd.DataFrame:
+        """コース変化の検出"""
+        df['コース変更'] = (df['芝・ダート'] != df['芝・ダート1']).astype(int)
+        df['芝からダート'] = ((df['芝・ダート1'] == 0) & (df['芝・ダート'] == 1)).astype(int)
+        df['ダートから芝'] = ((df['芝・ダート1'] == 1) & (df['芝・ダート'] == 0)).astype(int)
+        
+        return df
+    
+    def _build_weight_burden_ratio(self, df: pd.DataFrame) -> pd.DataFrame:
+        """負担重量比の計算"""
+        # 斤量/体重の比率
+        df['負担重量比'] = df['斤量'] / df['体重_numeric']
+        
+        # レース内での相対的な負担重量
+        df['相対負担重量'] = df.groupby('race_id')['負担重量比'].transform(
+            lambda x: (x - x.mean()) / x.std() if x.std() > 0 else 0
+        )
+        
+        return df
+    
+    def get_feature_names(self) -> List[str]:
+        """構築される特徴量名のリスト"""
+        return [
+            'クラス変化', 'クラス昇級', 'クラス降級', 'クラス維持',
+            '距離変化_絶対値', '距離延長', '距離短縮', '距離変化率',
+            '距離カテゴリ', '距離カテゴリ1', '距離カテゴリ変化',
+            'コース変更', '芝からダート', 'ダートから芝',
+            '負担重量比', '相対負担重量'
+        ]
+
+
 class UnifiedFeatureEngine:
     """統一特徴量エンジン"""
     
@@ -496,7 +744,10 @@ class UnifiedFeatureEngine:
             BasicFeatureBuilder(),
             TrackFeatureBuilder(),
             HistoricalFeatureBuilder(),
-            PayoutFeatureBuilder()
+            PayoutFeatureBuilder(),
+            SpeedIndexFeatureBuilder(),
+            RelativeRankingFeatureBuilder(),
+            ChangeDetectionFeatureBuilder()
         ]
         self.feature_names: List[str] = []
     
@@ -508,14 +759,23 @@ class UnifiedFeatureEngine:
         """全ての特徴量を構築"""
         result = df.copy()
         
+        # 特徴量名リストをクリアして再構築
+        self.feature_names = []
+        
         # 各ビルダーで特徴量を構築
         for builder in self.builders:
             try:
                 result = builder.build(result)
-                self.feature_names.extend(builder.get_feature_names())
+                builder_features = builder.get_feature_names()
+                # 重複を避けて特徴量名を追加
+                for feature in builder_features:
+                    if feature not in self.feature_names:
+                        self.feature_names.append(feature)
+                print(f"✓ {builder.__class__.__name__}: {len(builder_features)} features added")
             except Exception as e:
                 print(f"Warning: Feature builder {builder.__class__.__name__} failed: {e}")
         
+        print(f"Total features registered: {len(self.feature_names)}")
         return result
     
     def get_feature_columns(self, df: pd.DataFrame) -> List[str]:

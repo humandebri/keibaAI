@@ -16,7 +16,6 @@ import os
 from .base import BaseStrategy
 from ..core.config import config
 from ..core.utils import setup_logger
-from ..features.efficient_features import EfficientFeatureEngineering
 
 
 class AdvancedBettingStrategy(BaseStrategy):
@@ -39,34 +38,33 @@ class AdvancedBettingStrategy(BaseStrategy):
         self.jra_take_rate = 0.2  # JRA控除率
         
     def create_additional_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """追加特徴量の作成（高度な特徴量を含む）"""
+        """追加特徴量の作成（オッズを除外）"""
         df = df.copy()
         
-        # 基本的な特徴量
-        df['log_odds'] = np.log1p(df['オッズ'])
-        df['odds_rank'] = df.groupby('race_id')['オッズ'].rank()
-        df['popularity_rank'] = df.groupby('race_id')['人気'].rank()
-        df['relative_odds'] = df.groupby('race_id')['オッズ'].transform(
-            lambda x: x / x.min()
-        )
+        # オッズは特徴量に含めない（期待値計算でのみ使用）
+        # オッズ関連の特徴量は作成しない
         
-        # 体重変化率
-        df['weight_change_rate'] = df['体重変化'] / df['体重']
+        # 人気に基づく特徴量のみ作成
+        if '人気' in df.columns:
+            df['popularity_rank'] = df.groupby('race_id')['人気'].rank()
+            df['is_favorite'] = (df['人気'] == 1).astype(int)
+            df['is_longshot'] = (df['人気'] >= 10).astype(int)
         
-        # 効率的な特徴量エンジニアリング
-        feature_eng = EfficientFeatureEngineering(self.logger)
+        # 体重変化率（安全に計算）
+        if '体重変化' in df.columns and '体重' in df.columns:
+            # 体重を数値化
+            weight_values = []
+            for w in df['体重']:
+                try:
+                    weight = int(str(w).split('(')[0]) if pd.notna(w) else 480
+                except:
+                    weight = 480
+                weight_values.append(weight)
+            
+            df['体重_numeric'] = weight_values
+            df['weight_change_rate'] = df['体重変化'] / df['体重_numeric']
         
-        # 高度な特徴量を追加
-        try:
-            df = feature_eng.add_all_features_fast(df)
-            self.logger.info(f"Feature engineering completed. Total features: {len(df.columns)}")
-        except Exception as e:
-            self.logger.warning(f"Failed to add some features: {e}")
-            # 基本特徴量のみ追加
-            try:
-                df = feature_eng.add_basic_features(df)
-            except:
-                pass
+        self.logger.info(f"Feature engineering completed. Total features: {len(df.columns)}")
         
         return df
     
@@ -74,7 +72,18 @@ class AdvancedBettingStrategy(BaseStrategy):
         """着順予測モデルの訓練"""
         self.logger.info("Training advanced ranking model")
         
-        features = self._get_features(self.train_data)
+        # 特徴量カラムから特徴量データを取得
+        missing_cols = [col for col in self.feature_cols if col not in self.train_data.columns]
+        if missing_cols:
+            self.logger.warning(f"Missing feature columns: {missing_cols}")
+            available_cols = [col for col in self.feature_cols if col in self.train_data.columns]
+        else:
+            available_cols = self.feature_cols
+        
+        if not available_cols:
+            raise ValueError("No valid feature columns available for training")
+        
+        features = self.train_data[available_cols].values
         target = self.train_data['着順'].values
         
         # 回帰問題として訓練（着順を直接予測）
@@ -107,9 +116,12 @@ class AdvancedBettingStrategy(BaseStrategy):
     def predict_probabilities(self, model: lgb.Booster, 
                             race_data: pd.DataFrame) -> Dict[int, Dict[str, float]]:
         """各馬の着順確率を予測"""
-        features = self._get_features(race_data)
-        if features is None:
+        # 特徴量カラムから特徴量データを取得
+        available_cols = [col for col in self.feature_cols if col in race_data.columns]
+        if not available_cols:
             return {}
+        
+        features = race_data[available_cols].values
         
         # 着順予測
         predicted_positions = model.predict(features)
@@ -126,12 +138,17 @@ class AdvancedBettingStrategy(BaseStrategy):
             # 予測順位に基づく確率調整
             rank = predicted_positions[i]
             
+            # オッズを直接取得（特徴量には含めない）
+            odds_value = pd.to_numeric(horse['オッズ'], errors='coerce')
+            if pd.isna(odds_value):
+                odds_value = 99.9
+                
             result[horse_num] = {
                 'win_prob': self._calculate_win_prob(base_prob, rank),
                 'place_prob': self._calculate_place_prob(base_prob, rank),
                 'show_prob': self._calculate_show_prob(base_prob, rank),
                 'predicted_rank': rank,
-                'odds': float(horse['オッズ']),
+                'odds': float(odds_value),
                 'popularity': int(horse['人気'])
             }
         
@@ -186,6 +203,8 @@ class AdvancedBettingStrategy(BaseStrategy):
             estimated_odds = actual_odds / 100
         else:
             # オッズ推定（人気順位から）
+            # 実際のオッズを使用して推定精度を上げる
+            avg_odds = (probs[h1]['odds'] + probs[h2]['odds'] + probs[h3]['odds']) / 3
             pop_sum = probs[h1]['popularity'] + probs[h2]['popularity'] + probs[h3]['popularity']
             
             if pop_sum <= 10:  # 上位人気
@@ -217,7 +236,8 @@ class AdvancedBettingStrategy(BaseStrategy):
             # 実際のオッズを使用（払戻額/100円）
             estimated_odds = actual_odds / 100
         else:
-            # オッズ推定
+            # オッズ推定（人気順位と実際のオッズから）
+            avg_odds = (probs[h1]['odds'] + probs[h2]['odds']) / 2
             pop_avg = (probs[h1]['popularity'] + probs[h2]['popularity']) / 2
             
             if pop_avg <= 3:
@@ -246,7 +266,8 @@ class AdvancedBettingStrategy(BaseStrategy):
             # 実際のオッズを使用（払戻額/100円）
             estimated_odds = actual_odds / 100
         else:
-            # オッズ推定（馬連の約40%）
+            # オッズ推定（馬連の約40%、実際のオッズも考慮）
+            avg_odds = (probs[h1]['odds'] + probs[h2]['odds']) / 2
             pop_avg = (probs[h1]['popularity'] + probs[h2]['popularity']) / 2
             
             if pop_avg <= 3:
@@ -319,9 +340,19 @@ class AdvancedBettingStrategy(BaseStrategy):
         # 100円単位に丸める
         return int(bet_amount / 100) * 100
     
-    def run_backtest(self, initial_capital: float = 1_000_000) -> Dict:
-        """高度なバックテストの実行"""
+    def run_backtest(self, data: pd.DataFrame, train_years: List[int], 
+                     test_years: List[int], feature_cols: List[str],
+                     initial_capital: float = 1_000_000) -> Dict:
+        """高度なバックテストの実行（統一システム用）"""
         self.logger.info("Running advanced betting backtest with actual odds")
+        
+        # データを設定
+        self.data = data
+        self.feature_cols = feature_cols
+        
+        # データを分割
+        self.train_data = data[data['year'].isin(train_years)]
+        self.test_data = data[data['year'].isin(test_years)]
         
         # モデル訓練
         model = self.train_model()
@@ -336,14 +367,20 @@ class AdvancedBettingStrategy(BaseStrategy):
         }
         
         unique_races = self.test_data['race_id'].unique()
+        self.logger.info(f"Processing {len(unique_races)} unique races")
         
-        for i, race_id in enumerate(unique_races[:2000]):  # 最初の2000レース
-            if i % 200 == 0:
-                self.logger.debug(f"Processing race {i}/{min(len(unique_races), 2000)}")
+        for i, race_id in enumerate(unique_races[:100]):  # 最初の100レースでデバッグ
+            if i % 10 == 0:
+                self.logger.info(f"Processing race {i+1}/{min(len(unique_races), 100)}")
             
             race_data = self.test_data[self.test_data['race_id'] == race_id]
             if len(race_data) < 8:  # 出走頭数が少ないレースはスキップ
+                if i < 10:
+                    self.logger.info(f"Race {race_id}: Skipped (only {len(race_data)} horses)")
                 continue
+                
+            if i < 10:
+                self.logger.info(f"Race {race_id}: Processing {len(race_data)} horses")
             
             # 払戻データを取得
             payout_data = self._get_payout_data(race_data)
@@ -351,7 +388,12 @@ class AdvancedBettingStrategy(BaseStrategy):
             # 確率予測
             probs = self.predict_probabilities(model, race_data)
             if not probs:
+                if i < 10:
+                    self.logger.info(f"Race {race_id}: No probabilities predicted")
                 continue
+                
+            if i < 10:
+                self.logger.info(f"Race {race_id}: Predicted probabilities for {len(probs)} horses")
             
             # 予測順位でソート
             sorted_horses = sorted(probs.items(), 
@@ -437,9 +479,12 @@ class AdvancedBettingStrategy(BaseStrategy):
             race_bets.sort(key=lambda x: x['expected_value'], reverse=True)
             
             # デバッグ情報（最初の100レースのみ）
-            if i < 100 and race_bets:
-                self.logger.debug(f"Race {race_id}: {len(race_bets)} bets considered, "
-                                f"top EV: {race_bets[0]['expected_value']:.2f}")
+            if i < 10:
+                self.logger.info(f"Race {race_id}: {len(race_bets)} bets considered")
+                if race_bets:
+                    self.logger.info(f"Top EV: {race_bets[0]['expected_value']:.2f}, min_ev: {self.min_expected_value}")
+                else:
+                    self.logger.info(f"No bets met criteria (min_ev: {self.min_expected_value})")
             
             for bet in race_bets[:5]:
                 bet_amount = self.calculate_bet_amount(capital, bet)

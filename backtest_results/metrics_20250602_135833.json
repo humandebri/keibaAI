@@ -1,0 +1,32 @@
+{
+  "initial_capital": 1000000,
+  "final_capital": 630430000.0,
+  "total_return": 629.43,
+  "annual_return": 629.43,
+  "total_bets": 417,
+  "total_wins": 263,
+  "win_rate": 0.6306954436450839,
+  "avg_expected_value": 4.134622576776073,
+  "avg_kelly_fraction": 0.04363650132251033,
+  "max_drawdown": 0.011537352177675224,
+  "volatility": 1.4375736245267328,
+  "sharpe_ratio": 437.84192284914536,
+  "calmar_ratio": 54555.84524999999,
+  "profit_factor": 41.87207792207792,
+  "by_type": {
+    "quinella": {
+      "count": 90,
+      "wins": 76,
+      "win_rate": 0.8444444444444444,
+      "profit": 151560000.0,
+      "roi": 168.4
+    },
+    "wide": {
+      "count": 327,
+      "wins": 187,
+      "win_rate": 0.5718654434250765,
+      "profit": 477870000.0,
+      "roi": 146.13761467889907
+    }
+  }
+}

@@ -25,9 +25,7 @@ from enum import Enum
 # Core imports
 from .config import Config
 from .utils import DataLoader, FeatureProcessor, ModelManager, setup_logger
-from ..strategies.base import BaseStrategy
 from ..ml.ensemble_model import EnsembleRacePredictor
-from ..data_processing.data_encoding_v2 import DataEncoder
 
 
 class SystemMode(Enum):
@@ -84,7 +82,7 @@ class UnifiedKeibaAISystem:
         self.data_loader = DataLoader()
         self.feature_processor = FeatureProcessor()
         self.model_manager = ModelManager()
-        self.strategy: Optional[BaseStrategy] = None
+        self.strategy = None  # 遅延インポートで型チェックを回避
         self.predictor: Optional[EnsembleRacePredictor] = None
         
         # データとモデル
@@ -162,7 +160,7 @@ class UnifiedKeibaAISystem:
         self.logger.info(f"Prepared {len(self.feature_cols)} features")
         return data
     
-    def set_strategy(self, strategy: BaseStrategy) -> None:
+    def set_strategy(self, strategy) -> None:
         """
         ベッティング戦略の設定
         
@@ -260,7 +258,7 @@ class UnifiedKeibaAISystem:
         self,
         train_years: List[int],
         test_years: List[int],
-        strategy: Optional[BaseStrategy] = None
+        strategy = None
     ) -> Dict:
         """
         バックテストの実行
