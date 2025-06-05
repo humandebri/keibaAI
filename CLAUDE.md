@@ -162,4 +162,8 @@ data = processor.create_target_variables(data)
 ## Development Guidelines
 
 - ファイルの修正を行う際は新しいファイルを作らず同じファイルを更新してください
-```
+- コードの改善を行う際は極力新しいファイルを作らないこと
+- 関数名やファイル名はわかりやすく名付けること
+
+## Important Memory
+- 決してデモデータを用意しないこと
