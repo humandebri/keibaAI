@@ -916,7 +916,7 @@ def main():
     """メイン実行"""
     system = ImprovedMLSystem()
     system.train()
-    system.predict_race("live_race_data_202505021211.csv")
+    system.predict_race("live_race_data_202505021212.csv")
 
 
 if __name__ == "__main__":
