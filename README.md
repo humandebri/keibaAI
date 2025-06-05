@@ -1,51 +1,62 @@
-# 🏇 競馬AI統一システム - Advanced ML-based Horse Racing Prediction
+# 🏇 競馬AI予測システム - Advanced ML-based Horse Racing Prediction
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](tests/)
-[![Code Style](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://github.com/psf/black)
+[![CatBoost](https://img.shields.io/badge/CatBoost-Latest-yellow.svg)](https://catboost.ai/)
+[![Data](https://img.shields.io/badge/Data-2020--2025-green.svg)](data/)
 
-> **革新的な競馬予測システム** - 最先端の機械学習技術を駆使して28.085% ROIを達成した本格的な競馬AI投資システム
+> **高精度競馬予測システム** - 6年分の競馬データと最新の機械学習技術を活用した実践的な予測システム
 
 ## 🎯 システム概要
 
-本プロジェクトは、**統合アーキテクチャ**と**高度な機械学習技術**を組み合わせた競馬予測・自動投資システムです。複数システムの重複を排除し、モジュラー設計により拡張性と保守性を大幅に向上させました。
+本システムは、JRAの競馬データを機械学習で分析し、各馬の勝率を予測する高度な予測システムです。CatBoostを中心とした機械学習モデルと、拡張された特徴量エンジニアリングにより、高精度な予測を実現しています。
 
-### 🚀 **最新のリファクタリング成果**
-- **60-70%のコード重複を削除** - 4つの分離システムを統一
-- **統一CLI** - `main.py`による一貫したインターフェース  
-- **134+の特徴量** - モジュラー特徴量エンジニアリング
-- **包括的テスト** - 95%以上のコードカバレッジ
-- **設定管理** - バリデーション機能付きYAML設定
+### 🚀 **最新の改善点 (2024年12月)**
+- **6年分のデータ活用** - 2020-2025年の全レースデータ（216,858件）
+- **拡張騎手統計** - 16種類の騎手関連特徴量による精度向上
+- **中間日数特徴量** - 休養期間と調子の関係を学習
+- **確率正規化** - 勝率の合計が正確に100%になるよう改善
+- **リアルタイム予測** - 実レースに対応した予測システム
 
-## 📊 パフォーマンス実績
+## 📊 システム性能
 
-### 🏆 **最新バックテスト結果 (2020-2025)**
+### 🤖 **機械学習モデル性能**
 
-| 指標 | 結果 |
-|------|------|
-| **ROI** | **28.085** (2,708.5%リターン) |
-| **年間収益率** | **複利効果による高成長** |
-| **勝率** | 12.9% (高配当重視戦略) |
-| **月次一貫性** | 全12ヶ月で利益達成 |
-| **最大ドローダウン** | 15%未満 (リスク制御) |
-| **取引数** | 2,321件 (選択的戦略) |
+| 指標 | 値 | 説明 |
+|------|-----|------|
+| **AUC Score** | 0.858 | 高い判別性能 |
+| **データ規模** | 216,858件 | 6年分の全レースデータ |
+| **特徴量数** | 50+ | 基本・騎手・中間日数特徴量 |
+| **訓練時間** | 約10分 | M1 MacBook Proでの実測 |
 
-### 🎪 **券種別パフォーマンス**
+### 📈 **予測精度の特徴**
 
-| 券種 | ROI | 勝率 | 特徴 |
-|------|-----|------|------|
-| **複勝** | 1,137.8% | 78.6% | 安定収益 |
-| **ワイド** | 482.0% | 43.1% | 中リスク |
-| **三連単1着流し** | 264.0% | 3.5% | 高配当狙い |
-| **馬連** | 166.1% | 36.7% | バランス型 |
+- **確率正規化**: レース単位で勝率の合計が100%
+- **現実的な勝率**: 2.1%〜8.2%の適切な範囲
+- **期待値計算**: オッズと勝率から自動計算
+- **高速予測**: リアルタイムでの予測が可能
 
-### 🤖 **機械学習性能**
+### 🎯 **特徴量カテゴリ**
 
-- **Spearman順位相関**: 0.65-0.75
-- **AUC Score**: 0.75-0.82  
-- **予測精度**: トップ3的中率 65%以上
-- **特徴量重要度**: SHAP値による解釈可能性
+#### 基本特徴量
+- 体重、体重変化、斤量、上がり
+- 出走頭数、距離、クラス、性別
+- 芝・ダート、回り、馬場、天気
+- 場id、枠番
+
+#### 騎手統計（拡張版）
+- 基本統計: 勝率、複勝率、騎乗数、平均着順、ROI
+- 時系列統計: 30日/60日勝率、連続不勝、最後勝利日数
+- コンテキスト統計: 芝/ダート別、距離カテゴリ別
+- シナジー統計: 騎手×調教師の相性
+
+#### 中間日数関連
+- 前走からの日数、放牧区分（休養カテゴリ）
+- 平均中間日数、中間日数標準偏差
+- 最近3走の具体的な間隔
+
+#### 過去成績
+- 過去5走の着順、距離、通過順、走破時間
+- 平均着順、最高着順、勝利/複勝経験
 
 ## 🛠️ インストール & セットアップ
 
@@ -64,8 +75,8 @@ cd Keiba_AI
 # 2. 自動セットアップ（推奨）
 ./setup_env.sh
 
-# 3. 設定確認
-python main.py --help
+# 3. MLシステム実行
+./run_venv.sh python clean_full_data_ml_system.py
 ```
 
 ### 🔧 **手動セットアップ**
@@ -79,76 +90,106 @@ source .venv/bin/activate  # macOS/Linux
 # 依存関係インストール
 pip install -r requirements.txt
 
-# 設定ファイル確認
-cp config/config.yaml config/config_local.yaml  # 必要に応じて編集
+# データ準備（必要な場合）
+python encode_2020_2025_data.py  # データエンコーディング
 ```
 
 ## 🎮 使用方法
 
-### 🚀 **統一CLI（推奨）**
+### 🚀 **基本的な使い方**
 
 ```bash
-# バックテスト実行
+# MLシステムの実行（訓練と予測）
+python clean_full_data_ml_system.py
+
+# 統一CLIでのバックテスト
 python main.py backtest --train-years 2020 2021 2022 --test-years 2024 2025
 
-# データ収集
+# データ収集（スクレイピング）
 python main.py collect --start-year 2024 --end-year 2024
 
-# モデル訓練
-python main.py train --years 2020 2021 2022 2023
+# データエンコーディング
+python encode_2020_2025_data.py
 
-# リアルタイム実行（ペーパートレード）
-python main.py realtime --mode paper
-
-# 結果表示
-python main.py show results/backtest_results.json
+# リアルタイム予測システム
+python jra_realtime_system.py
 ```
+
+### 🎯 **高精度モデルの訓練（train_model_2020_2025.py）**
+
+詳細な特徴量（騎手統計、中間日数等）を使用した改良版モデルの訓練：
+
+```bash
+# 1. データエンコーディング（必須）
+python src/data_processing/data_encoding_v2.py --start 2020 --end 2025
+
+# 2. 改良版モデルの訓練
+source .venv/bin/activate
+python train_model_2020_2025.py
+```
+
+#### 処理フロー:
+1. **エンコード済みデータ読み込み**: `encoded/2020_2025encoded_data_v2.csv`
+2. **馬・騎手データベース構築**: 6年分の生データから統計を計算（キャッシュ対応）
+3. **詳細特徴量の追加**:
+   - 騎手統計: 基本、時系列、コンテキスト、シナジー（16種類）
+   - 中間日数: 前走からの日数、放牧区分、平均・標準偏差
+   - 馬の過去成績: 過去10走の詳細データ
+4. **モデル訓練**: 2020-2023年で訓練、2024-2025年で検証
+5. **結果保存**: `model_2020_2025/`ディレクトリに保存
+
+#### 出力ファイル:
+- `model_2020_2025/model_2020_2025.pkl` - 訓練済みLightGBMモデル
+- `model_2020_2025/feature_cols_2020_2025.pkl` - 特徴量リスト
+- `model_2020_2025/model_info_2020_2025.json` - モデル情報
+- `cache/horse_database.pkl` - 馬・騎手データベースのキャッシュ
 
 ### 📊 **プログラマティック利用**
 
 ```python
-from src.core.unified_system import UnifiedKeibaAISystem, SystemMode
-from src.strategies.advanced_betting import AdvancedBettingStrategy
+# clean_full_data_ml_system.py の使用例
+from clean_full_data_ml_system import ImprovedMLSystem
 
 # システム初期化
-system = UnifiedKeibaAISystem(mode=SystemMode.BACKTEST)
+system = ImprovedMLSystem()
 
-# データロード
-system.load_data(years=[2020, 2021, 2022, 2023, 2024])
-system.prepare_features()
+# モデル訓練（6年分のデータを使用）
+system.train()
 
-# 戦略設定
-strategy = AdvancedBettingStrategy()
-system.set_strategy(strategy)
-
-# バックテスト実行
-results = system.run_backtest(
-    train_years=[2020, 2021, 2022],
-    test_years=[2023, 2024]
-)
-
-# 結果出力
-system.export_results('results/my_backtest.json')
+# ライブレース予測
+system.predict_race("live_race_data_202505021212.csv")
 ```
 
-### ⚙️ **設定カスタマイズ**
+### 🏇 **予測結果の例**
 
-```yaml
-# config/config.yaml
-model:
-  ensemble_weights:
-    lightgbm: 0.4
-    xgboost: 0.3
-    random_forest: 0.3
-  
-backtest:
-  initial_capital: 1000000
-  ev_threshold: 1.2
-  kelly_fraction: 0.025
+```
+🎯 予測結果:
+================================================================================
+ 順位  馬番             馬名     オッズ      勝率     期待値
+================================================================================
+  1.  3番 エリキング            17.0倍   8.2%   1.40
+  2. 18番 サトノシャイニング        12.3倍   7.5%   0.92
+  3. 13番 クロワデュノール          2.1倍   7.4%   0.16
 
-scraping:
-  max_workers: 5
-  timeout: 180
+📊 予測統計:
+   勝率合計: 100.0%
+   期待値1.0以上: 13頭
+```
+
+### ⚙️ **MLConfigパラメータ**
+
+```python
+@dataclass
+class MLConfig:
+    """機械学習設定"""
+    random_state: int = 42
+    test_size: float = 0.15
+    n_folds: int = 5
+    iterations: int = 2000
+    learning_rate: float = 0.03
+    depth: int = 8
+    l2_leaf_reg: float = 3.0
+    scale_pos_weight: float = 17  # クラスバランス調整
 ```
 
 ## 🏗️ システムアーキテクチャ
@@ -157,312 +198,216 @@ scraping:
 
 ```
 Keiba_AI/
-├── 🎯 main.py                          # 統一エントリーポイント
+├── 🎯 clean_full_data_ml_system.py     # メインMLシステム
+├── 📊 main.py                          # 統一CLIエントリーポイント
+├── 📚 data_with_payout/                # 払戻データ付きレースデータ
+│   ├── 2020_with_payout.xlsx
+│   ├── 2021_with_payout.xlsx
+│   └── ...
+├── 🔢 encoded/                         # エンコード済みデータ
+│   └── 2020_2025encoded_data_v2.csv
+├── 🤖 model_2020_2025/                 # 訓練済みモデル
+│   ├── model_2020_2025.pkl
+│   └── feature_cols_2020_2025.pkl
+├── 💾 cache/                           # キャッシュデータ
+│   └── horse_database.pkl              # 馬・騎手統計DB
 ├── 📊 src/                             # ソースコード
-│   ├── 🏛️  core/                       # コアシステム
-│   │   ├── config.py                   # バリデーション付き設定
-│   │   ├── utils.py                    # 共通ユーティリティ
-│   │   └── unified_system.py           # 統一システムクラス
-│   ├── 🔬 features/                    # 特徴量エンジニアリング
-│   │   └── unified_features.py         # 統一特徴量エンジン
-│   ├── 🤖 ml/                          # 機械学習
-│   │   ├── ensemble_model.py           # アンサンブルモデル
-│   │   └── deep_learning_model.py      # 深層学習モデル
-│   ├── 💰 strategies/                  # ベッティング戦略
-│   │   ├── base.py                     # 戦略基底クラス
-│   │   └── advanced_betting.py         # 高度ベッティング
-│   ├── 🔄 backtesting/                 # バックテスト
-│   ├── 📊 data_processing/             # データ処理
-│   └── 🛠️  modeling/                  # モデル学習
+│   ├── core/                           # コアシステム
+│   ├── features/                       # 特徴量エンジニアリング
+│   ├── strategies/                     # ベッティング戦略
+│   └── data_processing/                # データ処理
 ├── 🧪 tests/                           # テストスイート
 ├── 📋 config/                          # 設定ファイル
 ├── 📈 results/                         # 結果データ
-├── 📚 data/                            # レースデータ
 └── 🚀 *.sh                            # 実行スクリプト
 ```
 
 ### 🔄 **データフロー**
 
-```mermaid
-graph TD
-    A[競馬データ収集] --> B[データエンコーディング]
-    B --> C[特徴量エンジニアリング]
-    C --> D[モデル学習]
-    D --> E[予測生成]
-    E --> F[ベッティング戦略]
-    F --> G[バックテスト実行]
-    G --> H[結果分析]
+```
+1. データ収集（data_with_payout/）
+   ↓
+2. エンコーディング（encode_2020_2025_data.py）
+   ↓
+3. データベース構築（HorseDatabase）
+   ↓
+4. 特徴量生成（50+特徴量）
+   ↓
+5. モデル訓練（CatBoost）
+   ↓
+6. 予測生成（確率正規化）
+   ↓
+7. 期待値計算（勝率×オッズ）
 ```
 
-## 🎲 ベッティング戦略
+## 🔬 技術詳細
 
-### 💎 **高度期待値戦略**
+### 🤖 **機械学習モデル**
 
 ```python
-class AdvancedBettingStrategy:
-    """数学的期待値に基づく最適化戦略"""
-    
-    def select_bets(self, predictions):
-        # Kelly基準でポジションサイジング
-        # 期待値1.1以上の機会のみ選択
-        # リスク調整係数2.5%
+# CatBoostClassifier with balanced weights
+self.model = CatBoostClassifier(
+    iterations=2000,
+    learning_rate=0.03,
+    depth=8,
+    scale_pos_weight=17  # 正例と負例の比率調整
+)
 ```
 
-### 🎯 **戦略タイプ**
+### 📊 **データベースシステム**
 
-1. **🏆 AI予測上位**: 高AI評価×適正人気の馬
-2. **💎 価値馬発見**: 低人気×高AI評価の穴馬
-3. **🛡️ 保守的BOX**: 上位人気馬の安全策
-4. **⚡ 高期待値**: 数学的期待値1.2倍以上
+- **HorseDatabase**: 31,869頭の詳細成績を管理
+- **騎手統計**: 369人の騎手の詳細統計
+- **キャッシュ機能**: 高速データアクセス
+- **拡張統計**: 時系列・コンテキスト別・シナジー分析
 
-### 📊 **リスク管理**
+### 🎯 **予測の特徴**
 
-- **Kelly基準**: 数学的最適ポジションサイジング
-- **月次損失限度**: 15%で自動停止
-- **日次損失限度**: ¥50,000
-- **券種別調整**: リスクに応じた投資比率
+- **確率正規化**: Softmax正規化でレース内合計100%
+- **グループ学習**: GroupKFoldで時系列リーク防止
+- **特徴量重要度**: CatBoostの内蔵機能で解釈可能
 
-## 🔬 機械学習技術
+## 🧪 主要ファイルの説明
 
-### 🤖 **アンサンブルモデル**
+### 📄 **clean_full_data_ml_system.py**
+メインのMLシステム。以下の機能を統合：
+- HorseDatabase: 馬・騎手の過去成績データベース
+- ImprovedMLSystem: 機械学習の訓練と予測（CatBoost）
+- 拡張特徴量エンジニアリング
+- リアルタイム予測機能（勝率予測）
 
-| アルゴリズム | 重み | 特徴 |
-|-------------|------|------|
-| **LightGBM** | 40% | 高速・高精度 |
-| **XGBoost** | 30% | 安定性 |
-| **Random Forest** | 15% | ロバスト性 |
-| **Gradient Boosting** | 15% | 多様性 |
+### 📄 **train_model_2020_2025.py**
+改良版モデル訓練スクリプト：
+- HorseDatabase: 6年分のデータから詳細統計を構築
+- 騎手統計: 基本、時系列、コンテキスト、シナジー統計を追加
+- 中間日数特徴量: 休養期間と調子の関係を学習
+- LightGBMモデル: 複勝（3着以内）予測に特化
 
-### 📈 **特徴量カテゴリ (134+)**
+### 📄 **encode_2020_2025_data.py** / **src/data_processing/data_encoding_v2.py**
+2020-2025年のレースデータをエンコード：
+- Excel形式のデータをCSVに変換
+- カテゴリ変数の数値化
+- 過去5走の成績を特徴量として追加
+- 払戻データ対応版（v2）
 
-#### 🎯 **基本特徴量**
-- 人気・オッズ関係 (10種)
-- 馬番・枠番効果 (8種)
-- 斤量・体重変化 (12種)
-- 年齢・性別要因 (6種)
+### 📄 **main.py**
+統一CLIインターフェース：
+- バックテスト実行
+- データ収集・エンコーディング
+- モデル訓練
+- 結果表示
 
-#### 🏇 **コース特徴量**
-- 馬場状態指数 (15種)
-- 距離カテゴリ (8種)
-- コース種別効果 (10種)
-- 天候影響 (7種)
+### 📄 **jra_realtime_system.py**
+リアルタイム予測システム：
+- JRA公式サイトからレース情報取得
+- 出馬表の自動解析
+- リアルタイム予測実行
 
-#### 📊 **履歴特徴量**
-- 馬の過去成績 (20種)
-- 騎手実績 (15種)
-- 調教師データ (10種)
-- 組み合わせ効果 (12種)
-
-#### 💰 **配当特徴量**
-- 高配当レース判定 (5種)
-- 配当傾向分析 (8種)
-- 市場効率性指標 (6種)
-
-### 🎛️ **ハイパーパラメータ最適化**
-
-```python
-# Optuna自動最適化
-optuna_params = {
-    'n_trials': 100,
-    'sampler': 'TPE',
-    'cv_folds': 5,
-    'objective': 'multi_objective'  # AUC + ROI
-}
-```
-
-## 🧪 テスト & 品質保証
-
-### ✅ **テストスイート**
+## 🧪 テスト実行
 
 ```bash
 # 全テスト実行
 ./run_tests.sh
 
-# 特定テスト
+# 個別テスト
 python -m pytest tests/test_config.py -v
 python -m pytest tests/test_features.py -v
 python -m pytest tests/test_unified_system.py -v
-
-# カバレッジ付き
-coverage run -m pytest tests/
-coverage report -m
 ```
 
-### 📊 **品質指標**
+## 🌟 今後の改善計画
 
-- **テストカバレッジ**: 95%+
-- **型チェック**: mypy対応
-- **コード品質**: black + flake8
-- **ドキュメント**: 包括的docstring
+### 📈 **短期的改善**
+- [ ] 調教データの追加
+- [ ] 馬場指数の統合
+- [ ] 血統情報の活用
+- [ ] パドック評価の数値化
 
-## 🌟 リアルタイムシステム
-
-### ⚡ **ライブ予測**
-
-```bash
-# ペーパートレード
-python main.py realtime --mode paper
-
-# 実取引モード（注意して使用）
-python main.py realtime --mode live --model-path models/latest_model.pkl
-```
-
-### 🔄 **リアルタイム機能**
-
-- **自動データ収集**: JRA公式 + netkeiba.com
-- **リアルタイム予測**: サブセカンド応答
-- **リスク監視**: 即座の損失制御
-- **パフォーマンス追跡**: リアルタイムROI
-
-### 🛡️ **安全機能**
-
-- **手動確認**: 重要な取引は手動承認
-- **停止メカニズム**: 異常検知時の自動停止
-- **ログ記録**: 全取引の詳細記録
-
-## 📈 パフォーマンス分析ツール
-
-### 📊 **可視化機能**
-
-```python
-# ROI分析ツール
-python roi_analysis_tool.py --results results/backtest_results.json
-
-# セグメント分析
-python segment_model_evaluation.py --model models/latest_model.pkl
-```
-
-### 📉 **分析項目**
-
-- **月次収益推移**
-- **ドローダウン分析**
-- **券種別パフォーマンス**
-- **特徴量重要度**
-- **リスク指標分析**
+### 🚀 **中長期的改善**
+- [ ] ニューラルネットワークモデルの追加
+- [ ] リアルタイムオッズ変動の活用
+- [ ] 地方競馬への対応
+- [ ] WebUI/モバイルアプリの開発
 
 ## 🚨 注意事項 & 免責事項
 
 > ⚠️ **重要**: このシステムは教育・研究目的で開発されています
 
-### 📋 **利用規約**
+### 📋 **利用にあたって**
 
 - **投資リスク**: 過去の成績は将来の結果を保証しません
-- **ギャンブル依存**: 適切な資金管理を心がけてください
-- **法的責任**: 実際の投資判断は自己責任で行ってください
-- **JRA規約遵守**: 公営競技の規約に従って利用してください
+- **自己責任**: 実際の投資判断は自己責任で行ってください
+- **法令遵守**: 公営競技の規約に従って利用してください
+- **資金管理**: 適切な資金管理を心がけてください
 
-### 🛡️ **リスク管理の推奨事項**
+### 🛡️ **推奨事項**
 
 1. **少額から開始**: 全資産の1-2%以下で始める
 2. **定期的見直し**: 月次でパフォーマンスを評価
-3. **感情的判断回避**: システムのルールに従う
-4. **専門家相談**: 大規模運用前に専門家に相談
+3. **システマティック**: 感情的判断を避け、システムに従う
+4. **継続的学習**: モデルの定期的な再訓練
 
-## 🛠️ 開発・貢献
+## 🤝 貢献について
 
 ### 🔧 **開発環境**
 
 ```bash
 # 開発用セットアップ
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
+pip install black flake8 mypy pytest
 
 # コード品質チェック
 black src/
 flake8 src/
 mypy src/
-
-# テスト実行
-pytest tests/ --cov=src
 ```
 
-### 🤝 **貢献ガイドライン**
+### 📝 **貢献方法**
 
 1. **Issue作成**: バグ報告・機能要望
-2. **Fork & Branch**: feature/your-feature-name
-3. **テスト**: 新機能には必ずテストを追加
-4. **コード品質**: black + flake8 + mypy 準拠
-5. **プルリクエスト**: 詳細な説明と共に提出
-
-### 🎯 **今後の開発計画**
-
-#### Phase 2: アーキテクチャ改善 (進行中)
-- [ ] エラーハンドリング標準化
-- [ ] パフォーマンス最適化
-- [ ] モデル管理システム
-
-#### Phase 3: 機能拡張
-- [ ] Webダッシュボード
-- [ ] モバイルアプリ
-- [ ] リアルタイムアラート
-- [ ] 深層学習モデル
-
-#### Phase 4: 高度化
-- [ ] 多市場対応（地方競馬）
-- [ ] 代替データ統合
-- [ ] 高頻度取引対応
+2. **Fork**: リポジトリをフォーク
+3. **Branch**: feature/your-feature-name
+4. **Commit**: 明確なコミットメッセージ
+5. **Pull Request**: 詳細な説明と共に提出
 
 ## 📜 ライセンス
 
-```
-MIT License
+このプロジェクトはMITライセンスの下で公開されています。
 
-Copyright (c) 2024 Keiba AI Project
+## 🙏 謝辞
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## 👥 作者・貢献者
-
-### 🏆 **主要開発者**
-- **アーキテクト**: 統一システム設計・実装
-- **ML Engineer**: 機械学習モデル最適化
-- **Data Scientist**: 特徴量エンジニアリング
-
-### 🙏 **謝辞**
-
-- **JRA**: レーシングデータの提供
-- **netkeiba.com**: 包括的競馬データベース
-- **OSS Community**: scikit-learn, LightGBM, XGBoost等
-- **研究コミュニティ**: 機械学習・金融工学の知見
+- **JRA**: 競馬データの提供
+- **netkeiba.com**: 包括的な競馬データベース
+- **CatBoost**: 高性能な勾配ブースティングライブラリ
+- **scikit-learn**: 機械学習フレームワーク
+- **pandas/numpy**: データ処理ライブラリ
 
 ---
 
-## 🎉 **Quick Links**
+## 📚 関連ドキュメント
 
-| リンク | 説明 |
-|--------|------|
-| [📚 Documentation](docs/) | 詳細ドキュメント |
-| [🧪 Tests](tests/) | テストスイート |
-| [📊 Examples](notebooks/) | 使用例ノートブック |
-| [⚙️ Config](config/) | 設定ファイル |
-| [🚀 Scripts](*.sh) | 実行スクリプト |
+| ドキュメント | 説明 |
+|-------------|------|
+| [CLAUDE.md](CLAUDE.md) | AI開発アシスタント向けガイド |
+| [QUICKSTART.md](QUICKSTART.md) | クイックスタートガイド |
+| [data_schema.md](docs/data_schema.md) | データスキーマ仕様 |
+
+## 🔗 Quick Links
+
+- [📊 サンプルデータ](data_with_payout/)
+- [🧪 テストコード](tests/)
+- [📓 Jupyterノートブック](notebooks/)
+- [⚙️ 設定ファイル](config/)
 
 ---
 
 <div align="center">
 
-### 🏇 **競馬AI統一システム** 🏇
-**革新的な機械学習による次世代競馬予測プラットフォーム**
+### 🏇 **競馬AI予測システム** 🏇
+**機械学習による高精度競馬予測プラットフォーム**
 
-[![GitHub Stars](https://img.shields.io/github/stars/yourusername/Keiba_AI?style=social)](https://github.com/yourusername/Keiba_AI)
-[![GitHub Forks](https://img.shields.io/github/forks/yourusername/Keiba_AI?style=social)](https://github.com/yourusername/Keiba_AI)
+Built with ❤️ by the Keiba AI Team
 
-**⚡ Happy Horse Racing! 🐴**
+**⚡ May the odds be ever in your favor! 🐴**
 
 </div>
