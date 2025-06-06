@@ -272,6 +272,12 @@ class RaceDataEncoderV2:
         
         df.replace('---', np.nan, inplace=True)
         
+        # 数値列の型変換（エラー回避のため）
+        numeric_columns = ['オッズ', '上がり', '体重', '体重変化', '斤量', '距離', '通過順']
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
         # 距離差と日付差
         if '距離' in df.columns and '距離1' in df.columns:
             df['距離差'] = df['距離'] - df['距離1']
@@ -297,19 +303,190 @@ class RaceDataEncoderV2:
         df[existing_kinryo_cols] = df[existing_kinryo_cols].apply(pd.to_numeric, errors='coerce')
         df['平均斤量'] = df[existing_kinryo_cols].mean(axis=1)
         
-        # 騎手の勝率
+        # 騎手統計（拡張版）- ラベルエンコーディング前に追加
         if '騎手' in df.columns and '着順' in df.columns:
-            jockey_win_rate = df.groupby('騎手')['着順'].apply(
-                lambda x: (x == 1).sum() / x.count()
-            ).reset_index()
-            jockey_win_rate.columns = ['騎手', '騎手の勝率']
+            print("  騎手統計を計算中...")
             
+            # 基本統計
+            jockey_stats = df.groupby('騎手').agg({
+                '着順': [
+                    lambda x: (x == 1).sum() / len(x),  # 勝率
+                    lambda x: (x <= 3).sum() / len(x),  # 複勝率
+                    'count',  # 騎乗数
+                    'mean',   # 平均着順
+                    'min'     # 最高着順
+                ]
+            }).round(3)
+            jockey_stats.columns = ['騎手の勝率', '騎手の複勝率', '騎手の騎乗数', '騎手の平均着順', '騎手の最高着順']
+            
+            # オッズ情報があればROIも計算
+            if 'オッズ' in df.columns:
+                jockey_roi = df[df['着順'] == 1].groupby('騎手')['オッズ'].mean()
+                jockey_stats['騎手のROI'] = jockey_stats['騎手の勝率'] * jockey_roi
+                jockey_stats['騎手のROI'] = jockey_stats['騎手のROI'].fillna(1.0)
+            else:
+                jockey_stats['騎手のROI'] = 1.0
+            
+            # 騎乗数を対数変換
+            jockey_stats['騎手の騎乗数'] = np.log1p(jockey_stats['騎手の騎乗数'])
+            
+            # データフレームに結合
+            jockey_stats.reset_index(inplace=True)
+            df = pd.merge(df, jockey_stats, on='騎手', how='left')
+            
+            # 時系列統計（30日、60日）
+            if '日付' in df.columns:
+                latest_date = df['日付'].max()
+                
+                for window_days in [30, 60]:
+                    cutoff_date = latest_date - pd.Timedelta(days=window_days)
+                    recent_df = df[df['日付'] >= cutoff_date]
+                    
+                    recent_stats = recent_df.groupby('騎手')['着順'].agg([
+                        lambda x: (x == 1).sum() / len(x),  # 勝率
+                        lambda x: (x <= 3).sum() / len(x)   # 複勝率
+                    ]).round(3)
+                    recent_stats.columns = [f'騎手の勝率_{window_days}日', f'騎手の複勝率_{window_days}日']
+                    recent_stats.reset_index(inplace=True)
+                    
+                    df = pd.merge(df, recent_stats, on='騎手', how='left')
+                    # 欠損値はデフォルト値で埋める
+                    df[f'騎手の勝率_{window_days}日'] = df[f'騎手の勝率_{window_days}日'].fillna(0.08)
+                    df[f'騎手の複勝率_{window_days}日'] = df[f'騎手の複勝率_{window_days}日'].fillna(0.25)
+                
+                # 連続不勝・最後の勝利からの日数
+                streak_stats = {}
+                for jockey in df['騎手'].unique():
+                    jockey_df = df[df['騎手'] == jockey].sort_values('日付', ascending=False)
+                    
+                    # 連続不勝
+                    cold_streak = 0
+                    for _, row in jockey_df.iterrows():
+                        if row['着順'] == 1:
+                            break
+                        cold_streak += 1
+                    
+                    # 最後の勝利からの日数
+                    win_dates = jockey_df[jockey_df['着順'] == 1]['日付']
+                    if len(win_dates) > 0:
+                        last_win_days = (latest_date - win_dates.iloc[0]).days
+                    else:
+                        last_win_days = 365
+                    
+                    streak_stats[jockey] = {
+                        '騎手の連続不勝': cold_streak,
+                        '騎手の最後勝利日数': np.exp(-last_win_days / 30)  # 指数減衰
+                    }
+                
+                streak_df = pd.DataFrame.from_dict(streak_stats, orient='index').reset_index()
+                streak_df.columns = ['騎手', '騎手の連続不勝', '騎手の最後勝利日数']
+                df = pd.merge(df, streak_df, on='騎手', how='left')
+                df['騎手の連続不勝'] = df['騎手の連続不勝'].fillna(0)
+                df['騎手の最後勝利日数'] = df['騎手の最後勝利日数'].fillna(np.exp(-30/30))
+            
+            # コンテキスト統計（芝/ダート、距離）
+            if '芝・ダート' in df.columns:
+                for surface in ['芝', 'ダ']:
+                    surface_df = df[df['芝・ダート'] == surface]
+                    surface_stats = surface_df.groupby('騎手')['着順'].apply(
+                        lambda x: (x == 1).sum() / len(x)
+                    ).reset_index()
+                    surface_stats.columns = ['騎手', f'騎手の勝率_{surface}']
+                    df = pd.merge(df, surface_stats, on='騎手', how='left')
+                    df[f'騎手の勝率_{surface}'] = df[f'騎手の勝率_{surface}'].fillna(0.08)
+            
+            if '距離' in df.columns:
+                # 距離カテゴリ別
+                df['距離カテゴリ'] = pd.cut(df['距離'], 
+                                        bins=[0, 1400, 1800, 2200, 4000], 
+                                        labels=['短距離', '中距離', '中長距離', '長距離'])
+                
+                for dist_cat in ['短距離', '中距離', '長距離']:
+                    dist_df = df[df['距離カテゴリ'].astype(str) == dist_cat]
+                    if len(dist_df) > 0:
+                        dist_stats = dist_df.groupby('騎手')['着順'].apply(
+                            lambda x: (x == 1).sum() / len(x)
+                        ).reset_index()
+                        dist_stats.columns = ['騎手', f'騎手の勝率_{dist_cat}']
+                        df = pd.merge(df, dist_stats, on='騎手', how='left')
+                        df[f'騎手の勝率_{dist_cat}'] = df[f'騎手の勝率_{dist_cat}'].fillna(0.08)
+                
+                # 距離カテゴリ列は削除
+                df = df.drop(columns=['距離カテゴリ'])
+            
+            # 騎手×調教師の相性
+            if '調教師' in df.columns:
+                synergy_stats = df.groupby(['騎手', '調教師'])['着順'].agg([
+                    lambda x: (x == 1).sum() / len(x) if len(x) >= 3 else np.nan
+                ]).reset_index()
+                synergy_stats.columns = ['騎手', '調教師', '騎手調教師相性']
+                df = pd.merge(df, synergy_stats, on=['騎手', '調教師'], how='left')
+                df['騎手調教師相性'] = df['騎手調教師相性'].fillna(0.08)
+            
+            # 騎手統計の保存（デバッグ用）
             os.makedirs('calc_rate', exist_ok=True)
-            jockey_win_rate.to_excel(
-                os.path.join('calc_rate', 'jockey_win_rate.xlsx'), 
+            jockey_stats.to_excel(
+                os.path.join('calc_rate', 'jockey_stats_extended.xlsx'), 
                 index=False
             )
-            df = pd.merge(df, jockey_win_rate, on='騎手', how='left')
+        
+        # 調教師統計
+        if '調教師' in df.columns and '着順' in df.columns:
+            trainer_stats = df.groupby('調教師').agg({
+                '着順': [
+                    lambda x: (x == 1).sum() / len(x),  # 勝率
+                    lambda x: (x <= 3).sum() / len(x)   # 複勝率
+                ]
+            }).round(3)
+            trainer_stats.columns = ['調教師の勝率', '調教師の複勝率']
+            trainer_stats.reset_index(inplace=True)
+            df = pd.merge(df, trainer_stats, on='調教師', how='left')
+            df['調教師の勝率'] = df['調教師の勝率'].fillna(0.08)
+            df['調教師の複勝率'] = df['調教師の複勝率'].fillna(0.25)
+        
+        # 馬の過去成績統計（中間日数など）
+        if '馬' in df.columns:
+            print("  馬の過去成績統計を計算中...")
+            
+            # 過去平均着順
+            horse_stats = df.groupby('馬')['着順'].agg(['mean', 'min', 'count']).reset_index()
+            horse_stats.columns = ['馬', '過去平均着順', '過去最高着順', '過去レース数']
+            
+            # 勝利・複勝経験
+            win_stats = df.groupby('馬')['着順'].apply(lambda x: (x == 1).sum()).reset_index()
+            win_stats.columns = ['馬', '勝利経験']
+            horse_stats = pd.merge(horse_stats, win_stats, on='馬')
+            
+            place_stats = df.groupby('馬')['着順'].apply(lambda x: (x <= 3).sum()).reset_index()
+            place_stats.columns = ['馬', '複勝経験']
+            horse_stats = pd.merge(horse_stats, place_stats, on='馬')
+            
+            df = pd.merge(df, horse_stats, on='馬', how='left')
+            
+            # 中間日数（前走からの日数）
+            if '日付' in df.columns and '日付1' in df.columns:
+                df['前走からの日数'] = (df['日付'] - df['日付1']).dt.days
+                df['前走からの日数'] = df['前走からの日数'].fillna(180)  # デフォルト値
+                
+                # 放牧区分
+                df['放牧区分'] = pd.cut(df['前走からの日数'], 
+                                     bins=[-1, 14, 28, 56, 84, 365, 9999],
+                                     labels=[0, 1, 2, 3, 4, 5])
+                df['放牧区分'] = df['放牧区分'].astype(int)
+                
+                # 平均中間日数
+                interval_cols = []
+                for i in range(1, 4):
+                    if f'日付差{i}' in df.columns:
+                        interval_cols.append(f'日付差{i}')
+                        df[f'中間日数{i}'] = df[f'日付差{i}']
+                
+                if interval_cols:
+                    df['平均中間日数'] = df[interval_cols].mean(axis=1)
+                    df['中間日数標準偏差'] = df[interval_cols].std(axis=1).fillna(0)
+                else:
+                    df['平均中間日数'] = 30
+                    df['中間日数標準偏差'] = 0
         
         # 出走頭数（既に含まれている場合はスキップ）
         if 'race_id' in df.columns and '出走頭数' not in df.columns:

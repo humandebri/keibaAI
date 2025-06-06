@@ -460,77 +460,122 @@ def create_features(df, horse_db=None):
             if col not in df_features.columns:
                 df_features[col] = horse_features_df[col]
     
-    # 騎手統計の追加
+    # 騎手統計の追加（エンコード済みデータの騎手名をデコードする必要がある）
     if '騎手' in df_features.columns:
-        # 基本統計
-        df_features['騎手の勝率'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_stats(x)['win_rate']
-        )
-        df_features['騎手の複勝率'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_stats(x)['place_rate']
-        )
-        df_features['騎手の騎乗数'] = df_features['騎手'].apply(
-            lambda x: np.log1p(horse_db.get_jockey_stats(x)['count'])
-        )
-        df_features['騎手の平均着順'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_stats(x)['avg_position']
-        )
-        df_features['騎手のROI'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_stats(x)['roi']
-        )
+        # エンコード済みデータの場合、騎手は数値になっているので元の名前に戻す必要がある
+        # まず、元のデータから騎手名のマッピングを作成
+        original_jockey_names = {}
+        if hasattr(horse_db, 'jockey_stats'):
+            # HorseDatabaseに騎手名がある場合はそれを使用
+            for jockey_name in horse_db.jockey_stats.keys():
+                original_jockey_names[jockey_name] = jockey_name
         
-        # 時系列統計
-        df_features['騎手の勝率_30日'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_time_stats(x, 30)['win_rate']
-        )
-        df_features['騎手の複勝率_30日'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_time_stats(x, 30)['place_rate']
-        )
-        df_features['騎手の勝率_60日'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_time_stats(x, 60)['win_rate']
-        )
-        df_features['騎手の連続不勝'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_streak_stats(x)['cold_streak']
-        )
-        df_features['騎手の最後勝利日数'] = df_features['騎手'].apply(
-            lambda x: np.exp(-horse_db.get_jockey_streak_stats(x)['last_win_days'] / 30)
-        )
+        # 騎手統計を追加（デフォルト値を使用）
+        print(f"騎手カラムのデータ型: {df_features['騎手'].dtype}")
+        print(f"騎手カラムのサンプル: {df_features['騎手'].head()}")
         
-        # コンテキスト統計（芝/ダート）
-        if '芝・ダート' in df_features.columns:
-            df_features['騎手の勝率_芝'] = df_features['騎手'].apply(
-                lambda x: horse_db.get_jockey_context_stats(x, 'surface', '芝')['win_rate']
+        # 数値化されている場合は統計の追加をスキップ
+        if pd.api.types.is_numeric_dtype(df_features['騎手']):
+            print("警告: 騎手データが既にエンコードされています。統計情報は追加できません。")
+            # デフォルト値を設定
+            df_features['騎手の勝率'] = 0.08
+            df_features['騎手の複勝率'] = 0.25
+            df_features['騎手の騎乗数'] = np.log1p(100)
+            df_features['騎手の平均着順'] = 8.0
+            df_features['騎手のROI'] = 1.0
+        else:
+            # 文字列の場合は通常通り処理
+            df_features['騎手の勝率'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_stats(x)['win_rate']
             )
-            df_features['騎手の勝率_ダート'] = df_features['騎手'].apply(
-                lambda x: horse_db.get_jockey_context_stats(x, 'surface', 'ダ')['win_rate']
+            df_features['騎手の複勝率'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_stats(x)['place_rate']
+            )
+            df_features['騎手の騎乗数'] = df_features['騎手'].apply(
+                lambda x: np.log1p(horse_db.get_jockey_stats(x)['count'])
+            )
+            df_features['騎手の平均着順'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_stats(x)['avg_position']
+            )
+            df_features['騎手のROI'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_stats(x)['roi']
             )
         
-        # 距離カテゴリ別
-        df_features['騎手の勝率_短距離'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_context_stats(x, 'distance', '短距離')['win_rate']
-        )
-        df_features['騎手の勝率_中距離'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_context_stats(x, 'distance', '中距離')['win_rate']
-        )
-        df_features['騎手の勝率_長距離'] = df_features['騎手'].apply(
-            lambda x: horse_db.get_jockey_context_stats(x, 'distance', '長距離')['win_rate']
-        )
-        
-        # シナジー統計
-        if '調教師' in df_features.columns:
-            df_features['騎手調教師相性'] = df_features.apply(
-                lambda row: horse_db.get_jockey_synergy_stats(row['騎手'], row['調教師'])['win_rate'],
-                axis=1
+        # 時系列統計（エンコード済みの場合はデフォルト値）
+        if pd.api.types.is_numeric_dtype(df_features['騎手']):
+            df_features['騎手の勝率_30日'] = 0.08
+            df_features['騎手の複勝率_30日'] = 0.25
+            df_features['騎手の勝率_60日'] = 0.08
+            df_features['騎手の連続不勝'] = 0
+            df_features['騎手の最後勝利日数'] = np.exp(-30 / 30)
+            
+            # コンテキスト統計もデフォルト値
+            df_features['騎手の勝率_芝'] = 0.08
+            df_features['騎手の勝率_ダート'] = 0.08
+            df_features['騎手の勝率_短距離'] = 0.08
+            df_features['騎手の勝率_中距離'] = 0.08
+            df_features['騎手の勝率_長距離'] = 0.08
+            df_features['騎手調教師相性'] = 0.08
+        else:
+            # 文字列の場合は通常通り処理
+            df_features['騎手の勝率_30日'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_time_stats(x, 30)['win_rate']
             )
+            df_features['騎手の複勝率_30日'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_time_stats(x, 30)['place_rate']
+            )
+            df_features['騎手の勝率_60日'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_time_stats(x, 60)['win_rate']
+            )
+            df_features['騎手の連続不勝'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_streak_stats(x)['cold_streak']
+            )
+            df_features['騎手の最後勝利日数'] = df_features['騎手'].apply(
+                lambda x: np.exp(-horse_db.get_jockey_streak_stats(x)['last_win_days'] / 30)
+            )
+            
+            # コンテキスト統計（芝/ダート）
+            if '芝・ダート' in df_features.columns:
+                df_features['騎手の勝率_芝'] = df_features['騎手'].apply(
+                    lambda x: horse_db.get_jockey_context_stats(x, 'surface', '芝')['win_rate']
+                )
+                df_features['騎手の勝率_ダート'] = df_features['騎手'].apply(
+                    lambda x: horse_db.get_jockey_context_stats(x, 'surface', 'ダ')['win_rate']
+                )
+            
+            # 距離カテゴリ別
+            df_features['騎手の勝率_短距離'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_context_stats(x, 'distance', '短距離')['win_rate']
+            )
+            df_features['騎手の勝率_中距離'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_context_stats(x, 'distance', '中距離')['win_rate']
+            )
+            df_features['騎手の勝率_長距離'] = df_features['騎手'].apply(
+                lambda x: horse_db.get_jockey_context_stats(x, 'distance', '長距離')['win_rate']
+            )
+            
+            # シナジー統計
+            if '調教師' in df_features.columns:
+                if pd.api.types.is_numeric_dtype(df_features['調教師']):
+                    df_features['騎手調教師相性'] = 0.08
+                else:
+                    df_features['騎手調教師相性'] = df_features.apply(
+                        lambda row: horse_db.get_jockey_synergy_stats(row['騎手'], row['調教師'])['win_rate'],
+                        axis=1
+                    )
     
     # 調教師統計
     if '調教師' in df_features.columns:
-        df_features['調教師の勝率'] = df_features['調教師'].apply(
-            lambda x: horse_db.get_trainer_stats(x)['win_rate']
-        )
-        df_features['調教師の複勝率'] = df_features['調教師'].apply(
-            lambda x: horse_db.get_trainer_stats(x)['place_rate']
-        )
+        if pd.api.types.is_numeric_dtype(df_features['調教師']):
+            df_features['調教師の勝率'] = 0.08
+            df_features['調教師の複勝率'] = 0.25
+        else:
+            df_features['調教師の勝率'] = df_features['調教師'].apply(
+                lambda x: horse_db.get_trainer_stats(x)['win_rate']
+            )
+            df_features['調教師の複勝率'] = df_features['調教師'].apply(
+                lambda x: horse_db.get_trainer_stats(x)['place_rate']
+            )
     
     # 距離カテゴリ
     if '距離' in df_features.columns:
